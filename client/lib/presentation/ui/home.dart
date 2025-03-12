@@ -1,4 +1,6 @@
+import 'package:counter_x/presentation/ui/response.dart';
 import 'package:counter_x/presentation/widgets/file_picker.dart';
+import 'package:counter_x/presentation/widgets/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
@@ -96,7 +98,9 @@ class Home extends StatelessWidget {
                 SizedBox(height: 5.h),
                 Center(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>ShimmerWidget()));
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF007BFF), // Matching theme color
                       foregroundColor: Colors.white, // White text color
