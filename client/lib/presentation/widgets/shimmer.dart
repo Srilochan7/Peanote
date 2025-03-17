@@ -34,7 +34,7 @@ class _ShimmerWidgetState extends State<ShimmerWidget> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            children: List.generate(5, (index) => _buildShimmerSection()),
+            children: List.generate(2, (index) => _buildShimmerSection()),
           ),
         ),
       ),
@@ -50,6 +50,7 @@ class _ShimmerWidgetState extends State<ShimmerWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(height: 10.h,),
           _buildShimmerBox(height: 20, width: 50.w), // Title
           const SizedBox(height: 10),
           _buildShimmerBox(height: 15, width: 70.w), // Subtitle
