@@ -1,7 +1,12 @@
+
+import 'dart:convert';
+
+import 'package:counter_x/presentation/ui/response.dart';
 import 'package:counter_x/presentation/widgets/file_picker.dart';
 import 'package:counter_x/presentation/widgets/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:sizer/sizer.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -17,8 +22,37 @@ class _HomeState extends State<Home> {
   String? selectedFilePath;
 
   Future<void> sendFileToServer(String docName, String filePath) async {
-    final url = Uri.parse('')
+  var uri = Uri.parse("http://127.0.0.1:5000/upload");
+  var request = http.MultipartRequest('POST', uri);
+
+  request.fields['doc_name'] = docName;
+  request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+  var response = await request.send();
+
+  if (response.statusCode == 200) {
+    var responseBody = await response.stream.bytesToString();
+    var jsonResponse = json.decode(responseBody);
+
+    if (jsonResponse.containsKey('analysis')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResponsePage(responseText: jsonResponse['analysis'], responseData: null,),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to analyze document")),
+      );
+    }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("File upload failed")),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

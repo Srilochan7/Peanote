@@ -14,34 +14,36 @@ class _ShimmerWidgetState extends State<ShimmerWidget> {
   @override
   void initState() {
     super.initState();
-    
-    // Navigate to Response Page after 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Response()),
-      );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) { // Check if the widget is still active
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ResponsePage(responseText: '', responseData: null,)), // Ensure Response exists
+          );
+        }
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Sizer(
-  builder: (context, orientation, deviceType) {
-    return Scaffold( // No 'children' should be here
-      backgroundColor: const Color(0xFF000813),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: List.generate(2, (index) => _buildShimmerSection()),
+      builder: (context, orientation, deviceType) {
+        return Scaffold(
+          backgroundColor: const Color(0xFF000813),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: List.generate(2, (index) => _buildShimmerSection()),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
-  },
-);
-
   }
 
   Widget _buildShimmerSection() {
@@ -50,7 +52,7 @@ class _ShimmerWidgetState extends State<ShimmerWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 10.h,),
+          SizedBox(height: 10.h),
           _buildShimmerBox(height: 20, width: 50.w), // Title
           const SizedBox(height: 10),
           _buildShimmerBox(height: 15, width: 70.w), // Subtitle

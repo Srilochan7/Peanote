@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
-class Response extends StatelessWidget {
-  const Response({super.key});
+class ResponsePage extends StatelessWidget {
+  final dynamic responseData;
+  const ResponsePage({super.key, required this.responseData, required String responseText});
 
   @override
   Widget build(BuildContext context) {
-    return Sizer(
-      builder : (context, orientation, deviceType){
-        return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 5.w),
-          child: Column(
-            
-          ),
-        );
-      }
+    return Scaffold(
+      appBar: AppBar(title: const Text('Response Page')),
+      body: Center(
+        child: Text(
+          'Server Response: ${responseData.toString()}',
+          style: const TextStyle(fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }
