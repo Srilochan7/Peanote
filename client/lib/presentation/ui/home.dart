@@ -1,12 +1,9 @@
-import 'dart:convert';
-import 'dart:io'; // For File and FilePicker
 import 'package:counter_x/presentation/widgets/file_picker.dart';
 import 'package:counter_x/presentation/widgets/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:sizer/sizer.dart';
-import 'package:file_picker/file_picker.dart'; // For file picking
+import 'package:file_picker/file_picker.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -20,45 +17,7 @@ class _HomeState extends State<Home> {
   String? selectedFilePath;
 
   Future<void> sendFileToServer(String docName, String filePath) async {
-    final url = Uri.parse('http://10.0.2.2:5000/upload'); // Flask server URL
-
-    try {
-      // Create a multipart request
-      var request = http.MultipartRequest('POST', url);
-
-      // Add the file to the request
-      var file = await http.MultipartFile.fromPath('file', filePath);
-      request.files.add(file);
-
-      // Add the document name to the request
-      request.fields['docName'] = docName;
-
-      // Send the request
-      var response = await request.send();
-
-      // Check the response
-      if (response.statusCode == 200) {
-        print('File uploaded successfully');
-        // Navigate to the next screen or show a success message
-        
-      } else {
-        print('Failed to upload file. Status code: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to upload file"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("An error occurred: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    final url = Uri.parse('')
   }
 
   @override
@@ -115,19 +74,18 @@ class _HomeState extends State<Home> {
                 ),
                 SizedBox(height: 2.h),
                 Center(
-                  child:CustomFilePicker(
-  onFilePicked: (filePath) {
-    if (filePath != null) {
-      setState(() {
-        selectedFilePath = filePath;
-      });
-      print("Selected file path: $filePath"); // Debugging
-    } else {
-      print("No file selected!");
-    }
-  },
-),
-
+                  child: CustomFilePicker(
+                    onFilePicked: (filePath) {
+                      if (filePath != null) {
+                        setState(() {
+                          selectedFilePath = filePath;
+                        });
+                        print("Selected file path: $filePath");
+                      } else {
+                        print("No file selected!");
+                      }
+                    },
+                  ),
                 ),
                 SizedBox(height: 5.h),
                 Text(
@@ -156,18 +114,20 @@ class _HomeState extends State<Home> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-  if (docName.text.isNotEmpty && selectedFilePath != null) {
-    sendFileToServer(docName.text, selectedFilePath!);
-    Navigator.push(context, MaterialPageRoute(builder: (context)=>ShimmerWidget()));
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Doc name or file is missing"),
-        backgroundColor: Colors.white10,
-      ),
-    );
-  }
-},
+                      if (docName.text.isNotEmpty && selectedFilePath != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ShimmerWidget()),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Doc name or file is missing"),
+                            backgroundColor: Colors.white10,
+                          ),
+                        );
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF007BFF),
                       foregroundColor: Colors.white,
