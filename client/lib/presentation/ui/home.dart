@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:counter_x/presentation/ui/response.dart';
@@ -22,37 +21,53 @@ class _HomeState extends State<Home> {
   String? selectedFilePath;
 
   Future<void> sendFileToServer(String docName, String filePath) async {
-  var uri = Uri.parse("http://127.0.0.1:5000/upload");
-  var request = http.MultipartRequest('POST', uri);
+    try {
+      var uri = Uri.parse("http://10.0.2.2:5000/upload"); // Use 10.0.2.2 for Android emulator
+      var request = http.MultipartRequest('POST', uri);
 
-  request.fields['doc_name'] = docName;
-  request.files.add(await http.MultipartFile.fromPath('file', filePath));
+      request.fields['doc_name'] = docName;
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
 
-  var response = await request.send();
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
-  if (response.statusCode == 200) {
-    var responseBody = await response.stream.bytesToString();
-    var jsonResponse = json.decode(responseBody);
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        
+        // Extract the analysis text from the Gemini API response
+        String analysisText = "";
+        try {
+          // Try to extract content from Gemini API response structure
+          if (jsonResponse.containsKey('candidates') && 
+              jsonResponse['candidates'].isNotEmpty &&
+              jsonResponse['candidates'][0].containsKey('content') &&
+              jsonResponse['candidates'][0]['content'].containsKey('parts') &&
+              jsonResponse['candidates'][0]['content']['parts'].isNotEmpty) {
+            
+            analysisText = jsonResponse['candidates'][0]['content']['parts'][0]['text'];
+          } else {
+            // Fallback if the expected structure isn't found
+            analysisText = "Received response from server, but couldn't parse the content structure.";
+          }
+        } catch (e) {
+          analysisText = "Error parsing response: $e";
+        }
 
-    if (jsonResponse.containsKey('analysis')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ResponsePage(responseText: jsonResponse['analysis'], responseData: null,),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to analyze document")),
-      );
+        // Navigate to the response page with the analysis
+        Navigator.pop(context); // Pop the shimmer widget
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResponsePage(responseText: analysisText, responseData: null),
+          ),
+        );
+      } else {
+        throw Exception("Server returned status code ${response.statusCode}: ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("Failed to upload file: $e");
     }
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("File upload failed")),
-    );
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +138,7 @@ class _HomeState extends State<Home> {
                 ),
                 SizedBox(height: 5.h),
                 Text(
-                  "What You’ll Get:",
+                  "What You'll Get:",
                   style: GoogleFonts.bricolageGrotesque(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -149,10 +164,26 @@ class _HomeState extends State<Home> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (docName.text.isNotEmpty && selectedFilePath != null) {
+                        // First show the shimmer effect
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => ShimmerWidget()),
                         );
+                        
+                        // Then send the file to the server
+                        sendFileToServer(docName.text, selectedFilePath!).then((_) {
+                          // If needed, you can pop the shimmer widget here
+                          // Navigator.pop(context);
+                        }).catchError((error) {
+                          // Handle any errors
+                          Navigator.pop(context); // Pop the shimmer widget
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error: $error"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        });
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

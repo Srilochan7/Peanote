@@ -11,20 +11,35 @@ class ShimmerWidget extends StatefulWidget {
 }
 
 class _ShimmerWidgetState extends State<ShimmerWidget> {
+  bool isLoading = true;
+  String? responseText;
+  dynamic responseData;
+
   @override
   void initState() {
     super.initState();
+    fetchData();
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 5), () {
-        if (mounted) { // Check if the widget is still active
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ResponsePage(responseText: '', responseData: null,)), // Ensure Response exists
-          );
-        }
+  Future<void> fetchData() async {
+    // Simulating an API call or data fetching
+    await Future.delayed(const Duration(seconds: 5)); // Replace with actual API call
+    
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+        responseText = "Your API Response"; // Replace with actual response
+        responseData = {}; // Replace with actual response data
       });
-    });
+
+      // Navigate to ResponsePage when data is ready
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResponsePage(responseText: responseText!, responseData: responseData),
+        ),
+      );
+    }
   }
 
   @override
@@ -33,16 +48,20 @@ class _ShimmerWidgetState extends State<ShimmerWidget> {
       builder: (context, orientation, deviceType) {
         return Scaffold(
           backgroundColor: const Color(0xFF000813),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: List.generate(2, (index) => _buildShimmerSection()),
-              ),
-            ),
-          ),
+          body: isLoading ? _buildShimmerUI() : const SizedBox(), // Show shimmer while loading
         );
       },
+    );
+  }
+
+  Widget _buildShimmerUI() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: List.generate(2, (index) => _buildShimmerSection()),
+        ),
+      ),
     );
   }
 
@@ -53,17 +72,17 @@ class _ShimmerWidgetState extends State<ShimmerWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 10.h),
-          _buildShimmerBox(height: 20, width: 50.w), // Title
+          _buildShimmerBox(height: 20, width: 50.w),
           const SizedBox(height: 10),
-          _buildShimmerBox(height: 15, width: 70.w), // Subtitle
+          _buildShimmerBox(height: 15, width: 70.w),
           const SizedBox(height: 15),
-          _buildShimmerBox(height: 150, width: double.infinity, borderRadius: 10), // Image Placeholder
+          _buildShimmerBox(height: 150, width: double.infinity, borderRadius: 10),
           const SizedBox(height: 15),
-          _buildShimmerBox(height: 15, width: double.infinity), // Body Text
+          _buildShimmerBox(height: 15, width: double.infinity),
           const SizedBox(height: 10),
           _buildShimmerBox(height: 15, width: 80.w),
           const SizedBox(height: 20),
-          _buildShimmerBox(height: 40, width: 100.w, borderRadius: 25), // Button
+          _buildShimmerBox(height: 40, width: 100.w, borderRadius: 25),
         ],
       ),
     );
