@@ -2,7 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class CustomFilePicker extends StatefulWidget {
-  final Function(String?) onFilePicked; // Changed parameter type
+  final Function(String?) onFilePicked;
 
   const CustomFilePicker({super.key, required this.onFilePicked});
 
@@ -22,13 +22,19 @@ class _CustomFilePickerState extends State<CustomFilePicker> {
         return;
       }
 
+      String fullFileName = result.files.single.name;
+      String extension = fullFileName.split('.').last;
+      String shortName = fullFileName.length > 5 
+          ? "${fullFileName.substring(0, 5)}... .$extension"
+          : fullFileName;
+
       setState(() {
-        fileName = result.files.single.name;
+        fileName = shortName;
       });
 
       String filePath = result.files.single.path!;
       print("Selected file: $filePath");
-      widget.onFilePicked(filePath); // Pass the file path back
+      widget.onFilePicked(filePath);
     } catch (e) {
       print("File picking error: $e");
     }

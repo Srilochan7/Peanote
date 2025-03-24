@@ -51,14 +51,15 @@ def call_gemini_api(text, doc_name):
     
     # Predefined prompt for legal document analysis
     prompt = (
-        f"You are a legal assistant from India and know all the Indian Judicial System laws. Analyze the provided document {doc_name} and provide the following:\n\n"
-        "1. Concise Summary: Provide a brief summary.\n"
-        "2. Legal Terms Explanation: Explain legal terms in simple language.\n"
-        "3. Potential Risks: Highlight any legal/financial risks.\n"
-        "4. Suggestions: Offer actionable recommendations.\n"
-        "If the document is not legal, respond with: \"Not a legal document\""
-        "no jargon nothing just the matter no extra info"
-    )
+    f"You are a legal assistant from India with expertise in the Indian Judicial System. Analyze the document {doc_name} and provide the following:\n\n"
+    "1. Summary: A brief and clear summary.\n"
+    "2. Legal Terms: Explain complex legal terms in simple language.\n"
+    "3. Risks: Identify any legal or financial risks.\n"
+    "4. Recommendations: Provide actionable suggestions.\n\n"
+    "If the document is not legal, respond with: 'Not a legal document.'\n"
+    "Maintain clarity and conciseness. Do not use symbols only. The output length should match the document’s complexity and content."
+)
+
 
     # API request body (Correct Format)
     data = {

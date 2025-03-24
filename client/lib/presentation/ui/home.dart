@@ -19,6 +19,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final TextEditingController docName = TextEditingController();
   String? selectedFilePath;
+    String? responseText;
+  dynamic responseData;
 
   Future<void> sendFileToServer(String docName, String filePath) async {
     try {
@@ -69,6 +71,17 @@ class _HomeState extends State<Home> {
     }
   }
 
+   Future<void> fetchData() async {
+    
+    if (mounted) {
+      setState(() {
+    
+        responseText = "Your API Response"; // Replace with actual response
+        responseData = {}; // Replace with actual response data
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Sizer(
@@ -91,7 +104,7 @@ class _HomeState extends State<Home> {
                     ),
                   ),
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 8.h),
                 Text(
                   "Name of the document 📄",
                   style: GoogleFonts.bricolageGrotesque(
@@ -122,6 +135,15 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 SizedBox(height: 2.h),
+                Text(
+                  "Upload the document 📁",
+                  style: GoogleFonts.bricolageGrotesque(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white54,
+                  ),
+                ),
+                SizedBox(height: 2.h,),
                 Center(
                   child: CustomFilePicker(
                     onFilePicked: (filePath) {
@@ -167,7 +189,7 @@ class _HomeState extends State<Home> {
                         // First show the shimmer effect
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ShimmerWidget()),
+                          MaterialPageRoute(builder: (context) => ResponsePage(responseText: '', responseData: null,)),
                         );
                         
                         // Then send the file to the server
