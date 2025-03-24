@@ -1,13 +1,6 @@
-import 'dart:convert';
-
-import 'package:counter_x/presentation/ui/response.dart';
-import 'package:counter_x/presentation/widgets/file_picker.dart';
-import 'package:counter_x/presentation/widgets/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:sizer/sizer.dart';
-import 'package:file_picker/file_picker.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -17,253 +10,170 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final TextEditingController docName = TextEditingController();
-  String? selectedFilePath;
-    String? responseText;
-  dynamic responseData;
-
-  Future<void> sendFileToServer(String docName, String filePath) async {
-    try {
-      var uri = Uri.parse("http://10.0.2.2:5000/upload"); // Use 10.0.2.2 for Android emulator
-      var request = http.MultipartRequest('POST', uri);
-
-      request.fields['doc_name'] = docName;
-      request.files.add(await http.MultipartFile.fromPath('file', filePath));
-
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200) {
-        var jsonResponse = json.decode(response.body);
-        
-        // Extract the analysis text from the Gemini API response
-        String analysisText = "";
-        try {
-          // Try to extract content from Gemini API response structure
-          if (jsonResponse.containsKey('candidates') && 
-              jsonResponse['candidates'].isNotEmpty &&
-              jsonResponse['candidates'][0].containsKey('content') &&
-              jsonResponse['candidates'][0]['content'].containsKey('parts') &&
-              jsonResponse['candidates'][0]['content']['parts'].isNotEmpty) {
-            
-            analysisText = jsonResponse['candidates'][0]['content']['parts'][0]['text'];
-          } else {
-            // Fallback if the expected structure isn't found
-            analysisText = "Received response from server, but couldn't parse the content structure.";
-          }
-        } catch (e) {
-          analysisText = "Error parsing response: $e";
-        }
-
-        // Navigate to the response page with the analysis
-        Navigator.pop(context); // Pop the shimmer widget
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResponsePage(responseText: analysisText, responseData: null),
-          ),
-        );
-      } else {
-        throw Exception("Server returned status code ${response.statusCode}: ${response.body}");
-      }
-    } catch (e) {
-      throw Exception("Failed to upload file: $e");
-    }
-  }
-
-   Future<void> fetchData() async {
-    
-    if (mounted) {
-      setState(() {
-    
-        responseText = "Your API Response"; // Replace with actual response
-        responseData = {}; // Replace with actual response data
-      });
-    }
-  }
+  // Sample data for notes
+  final List<Map<String, dynamic>> notes = [
+    {
+      'title': 'Lecture on Amino Acids, Peptides, and Proteins',
+      'date': 'Jun 12, 2024',
+      'icon': Icons.science,
+      'iconColor': Colors.purple,
+    },
+    {
+      'title': 'How to Film Yourself: Tips for Solo Filmmaking',
+      'date': 'Jun 12, 2024',
+      'icon': Icons.videocam,
+      'iconColor': Colors.black,
+    },
+    {
+      'title': 'Tesla Shareholder Meeting: Elon Musk\'s 2018 Pay Package',
+      'date': 'Jun 12, 2024',
+      'icon': Icons.trending_up,
+      'iconColor': Colors.red,
+    },
+    {
+      'title': 'History Behind NBA Team Names',
+      'date': 'Jun 12, 2024',
+      'icon': Icons.sports_basketball,
+      'iconColor': Colors.orange,
+    },
+    {
+      'title': 'Geschichte von Northern Electric und AT&T',
+      'date': 'Jun 11, 2024, 22 minutes',
+      'icon': Icons.call,
+      'iconColor': Colors.grey,
+    },
+    {
+      'title': 'History of Northern Electric/Northern Telecom and Its Relationship',
+      'date': 'Jun 11, 2024, 22 minutes',
+      'icon': Icons.call,
+      'iconColor': Colors.grey,
+    },
+    // Add a few more notes to make the list longer
+    {
+      'title': 'Advanced Machine Learning Techniques',
+      'date': 'Jun 10, 2024',
+      'icon': Icons.computer,
+      'iconColor': Colors.blue,
+    },
+    {
+      'title': 'Digital Marketing Strategies for 2024',
+      'date': 'Jun 9, 2024',
+      'icon': Icons.arrow_back,
+      'iconColor': Colors.green,
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Sizer(
       builder: (context, orientation, deviceType) {
         return Scaffold(
-          backgroundColor: const Color(0xFF000813),
+          backgroundColor: const Color(0xFFF0EFF6),
           body: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 5.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 12.h),
-                Center(
-                  child: Text(
-                    "Saul Goodman",
-                    style: GoogleFonts.bricolageGrotesque(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white54,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  "Name of the document 📄",
-                  style: GoogleFonts.bricolageGrotesque(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white54,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                TextFormField(
-                  controller: docName,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: "Eg: NOC",
-                    hintStyle: GoogleFonts.bricolageGrotesque(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white54,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.white54),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.blueAccent),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  "Upload the document 📁",
-                  style: GoogleFonts.bricolageGrotesque(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white54,
-                  ),
-                ),
-                SizedBox(height: 2.h,),
-                Center(
-                  child: CustomFilePicker(
-                    onFilePicked: (filePath) {
-                      if (filePath != null) {
-                        setState(() {
-                          selectedFilePath = filePath;
-                        });
-                        print("Selected file path: $filePath");
-                      } else {
-                        print("No file selected!");
-                      }
-                    },
-                  ),
-                ),
-                SizedBox(height: 5.h),
-                Text(
-                  "What You'll Get:",
-                  style: GoogleFonts.bricolageGrotesque(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white54,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFeatureText("📝  Summarized Report",
-                        "A concise breakdown of key details like bond period, stipend, and notice period."),
-                    _buildFeatureText("⚖️ Legal Terms Explained",
-                        "Identifies and explains complex legal terms in the document."),
-                    _buildFeatureText("🚨 Low Risk Score",
-                        "Assigns a risk level (Low, Medium, High) based on severity of clauses."),
-                    _buildFeatureText("🤖 AI Suggestion",
-                        "Provides insights on fairness, potential red flags, and recommendations."),
-                  ],
-                ),
-                SizedBox(height: 5.h),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (docName.text.isNotEmpty && selectedFilePath != null) {
-                        // First show the shimmer effect
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ResponsePage(responseText: '', responseData: null,)),
-                        );
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 2.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Right side empty for balance
+                        const SizedBox(width: 40),
                         
-                        // Then send the file to the server
-                        sendFileToServer(docName.text, selectedFilePath!).then((_) {
-                          // If needed, you can pop the shimmer widget here
-                          // Navigator.pop(context);
-                        }).catchError((error) {
-                          // Handle any errors
-                          Navigator.pop(context); // Pop the shimmer widget
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Error: $error"),
-                              backgroundColor: Colors.red,
+                        // Chat and Settings icons on the right
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.chat_bubble_outline, size: 24),
+                              onPressed: () {},
                             ),
-                          );
-                        });
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Doc name or file is missing"),
-                            backgroundColor: Colors.white10,
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF007BFF),
-                      foregroundColor: Colors.white,
-                      padding:
-                          EdgeInsets.symmetric(vertical: 1.5.h, horizontal: 5.w),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      shadowColor: Colors.blueAccent.withOpacity(0.5),
-                      elevation: 5,
+                            IconButton(
+                              icon: const Icon(Icons.settings_outlined, size: 24),
+                              onPressed: () {},
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+                  ),
+                  
+                  SizedBox(height: 2.h),
+                  
+                  // "My notes" title
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5.w),
                     child: Text(
-                      "✨ Generate",
-                      style: GoogleFonts.bricolageGrotesque(
-                        fontSize: 18,
+                      "My notes",
+                      style: GoogleFonts.lexend(
+                        fontSize: 30,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Colors.black,
                       ),
                     ),
                   ),
-                ),
-                SizedBox(height: 5.h),
-              ],
+                  
+                  SizedBox(height: 2.h),
+                  
+                  // Notes list
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: notes.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 0.5.h),
+                        child: Card(
+                          elevation: 0,
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: notes[index]['iconColor'].withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                notes[index]['icon'],
+                                color: notes[index]['iconColor'],
+                                size: 24,
+                              ),
+                            ),
+                            title: Text(
+                              notes[index]['title'],
+                              style: GoogleFonts.lexend(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            subtitle: Text(
+                              notes[index]['date'],
+                              style: GoogleFonts.lexend(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  // Media player controls at bottom
+                  
+                ],
+              ),
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildFeatureText(String title, String description) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 1.h),
-      child: RichText(
-        text: TextSpan(
-          style: GoogleFonts.bricolageGrotesque(
-            fontSize: 16,
-            color: Colors.white54,
-          ),
-          children: [
-            TextSpan(
-              text: "$title – ",
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.blueAccent),
-            ),
-            TextSpan(text: description),
-          ],
-        ),
-      ),
     );
   }
 }
