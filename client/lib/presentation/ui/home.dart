@@ -1,5 +1,7 @@
+import 'package:counter_x/models/note_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 
 class Home extends StatefulWidget {
@@ -10,166 +12,219 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  // Sample data for notes
-  final List<Map<String, dynamic>> notes = [
-    {
-      'title': 'Lecture on Amino Acids, Peptides, and Proteins',
-      'date': 'Jun 12, 2024',
-      'icon': Icons.science,
-      'iconColor': Colors.purple,
-    },
-    {
-      'title': 'How to Film Yourself: Tips for Solo Filmmaking',
-      'date': 'Jun 12, 2024',
-      'icon': Icons.videocam,
-      'iconColor': Colors.black,
-    },
-    {
-      'title': 'Tesla Shareholder Meeting: Elon Musk\'s 2018 Pay Package',
-      'date': 'Jun 12, 2024',
-      'icon': Icons.trending_up,
-      'iconColor': Colors.red,
-    },
-    {
-      'title': 'History Behind NBA Team Names',
-      'date': 'Jun 12, 2024',
-      'icon': Icons.sports_basketball,
-      'iconColor': Colors.orange,
-    },
-    {
-      'title': 'Geschichte von Northern Electric und AT&T',
-      'date': 'Jun 11, 2024, 22 minutes',
-      'icon': Icons.call,
-      'iconColor': Colors.grey,
-    },
-    {
-      'title': 'History of Northern Electric/Northern Telecom and Its Relationship',
-      'date': 'Jun 11, 2024, 22 minutes',
-      'icon': Icons.call,
-      'iconColor': Colors.grey,
-    },
-    // Add a few more notes to make the list longer
-    {
-      'title': 'Advanced Machine Learning Techniques',
-      'date': 'Jun 10, 2024',
-      'icon': Icons.computer,
-      'iconColor': Colors.blue,
-    },
-    {
-      'title': 'Digital Marketing Strategies for 2024',
-      'date': 'Jun 9, 2024',
-      'icon': Icons.arrow_back,
-      'iconColor': Colors.green,
-    },
-  ];
+  List<Note> filteredNotes = [];
+  bool sorted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    filteredNotes = notes;
+  }
+
+  List<Note> sortNotes(List<Note> notes) {
+    notes.sort((a, b) => sorted
+        ? a.modifiedTime.compareTo(b.modifiedTime)
+        : b.modifiedTime.compareTo(a.modifiedTime));
+
+    sorted = !sorted;
+    return notes;
+  }
+
+  void searchNotes(String searchText) {
+    setState(() {
+      filteredNotes = notes
+          .where((note) =>
+              note.content.toLowerCase().contains(searchText.toLowerCase()) ||
+              note.title.toLowerCase().contains(searchText.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void deleteNote(int index) {
+    setState(() {
+      filteredNotes.removeAt(index);
+    });
+  }
+
+  void showEditDialog(BuildContext context, int index, Note note) {
+    // Placeholder function for editing logic
+  }
 
   @override
   Widget build(BuildContext context) {
     return Sizer(
       builder: (context, orientation, deviceType) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF0EFF6),
-          body: SingleChildScrollView(
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 2.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 5.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Right side empty for balance
-                        const SizedBox(width: 40),
-                        
-                        // Chat and Settings icons on the right
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.chat_bubble_outline, size: 24),
-                              onPressed: () {},
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.settings_outlined, size: 24),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 2.h),
-                  
-                  // "My notes" title
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 5.w),
-                    child: Text(
-                      "My notes",
+          backgroundColor: const Color.fromARGB(255, 232, 230, 244),
+          body: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Peanote AI 🥜",
                       style: GoogleFonts.lexend(
-                        fontSize: 30,
+                        fontSize: 27,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          filteredNotes = sortNotes(filteredNotes);
+                        });
+                      },
+                      icon: Container(
+                        width: 10.w,
+                        height: 5.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white38,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.sort,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 2.h),
+                TextField(
+                  onChanged: searchNotes,
+                  style: GoogleFonts.lexend(
+                    fontSize: 16.sp,
+                    color: Colors.black,
                   ),
-                  
-                  SizedBox(height: 2.h),
-                  
-                  // Notes list
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: notes.length,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    hintText: "Search your notes...",
+                    hintStyle: GoogleFonts.lexend(
+                      fontSize: 20,
+                      color: Colors.black38,
+                    ),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    fillColor: Colors.white60,
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: const BorderSide(color: Colors.white60),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(color: Colors.white60),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(color: Colors.white60),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: filteredNotes.length,
                     itemBuilder: (context, index) {
+                      final note = filteredNotes[index];
                       return Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 0.5.h),
+                        padding: const EdgeInsets.only(bottom: 10.0),
                         child: Card(
-                          elevation: 0,
-                          color: Colors.white,
+                          elevation: 4,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: notes[index]['iconColor'].withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                notes[index]['icon'],
-                                color: notes[index]['iconColor'],
-                                size: 24,
-                              ),
-                            ),
-                            title: Text(
-                              notes[index]['title'],
-                              style: GoogleFonts.lexend(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            subtitle: Text(
-                              notes[index]['date'],
-                              style: GoogleFonts.lexend(
-                                fontSize: 12,
-                                color: Colors.grey,
+                            title: RichText(
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              text: TextSpan(
+                                text: "${note.title} \n",
+                                style: GoogleFonts.lexend(
+                                  fontSize: 19.sp,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: note.content,
+                                    style: GoogleFonts.lexend(
+                                      fontSize: 15.sp,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            trailing: const Icon(Icons.chevron_right),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                "Edited ${DateFormat('dd MMM yyyy, hh:mm a').format(note.modifiedTime)}",
+                                style: GoogleFonts.lexend(
+                                  fontSize: 10,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            trailing: PopupMenuButton<int>(
+                              onSelected: (value) {
+                                if (value == 0) {
+                                  showAboutDialog(context:  context,
+                                  are u sure u want to delete  ??
+                                  )
+                                  deleteNote(index);
+                                } else if (value == 1) {
+                                  showEditDialog(context, index, note);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: 0,
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.delete, color: Colors.red),
+                                      const SizedBox(width: 10),
+                                      Text("Delete",
+                                          style: GoogleFonts.lexend(fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 1,
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.edit, color: Colors.blue),
+                                      const SizedBox(width: 10),
+                                      Text("Edit",
+                                          style: GoogleFonts.lexend(fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              icon: const Icon(Icons.menu),
+                            ),
                           ),
                         ),
                       );
                     },
                   ),
-                  
-                  // Media player controls at bottom
-                  
-                ],
-              ),
+                ),
+              ],
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            elevation: 10,
+            backgroundColor: Colors.white38,
+            shape: const CircleBorder(),
+            onPressed: () {
+              // Add note action
+            },
+            child: const Icon(
+              Icons.add,
+              color: Colors.black87,
+              size: 30,
             ),
           ),
         );
