@@ -1,4 +1,5 @@
 import 'package:counter_x/models/note_model.dart';
+import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -137,6 +138,17 @@ class _HomeState extends State<Home> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: ListTile(
+                            onTap: () async {
+                              final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => Notepad(note: filteredNotes[index],)));
+
+                              if (result != null) {
+                setState(() {
+                  int oi = notes.indexOf(filteredNotes[index]);
+                  
+                  notes[oi] = Note(id: notes[oi].id, title: result[0], content: result[1], modifiedTime: DateTime.now());
+                }); // Refresh UI
+              }
+                            },
                             title: RichText(
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
@@ -171,10 +183,48 @@ class _HomeState extends State<Home> {
                             trailing: PopupMenuButton<int>(
                               onSelected: (value) {
                                 if (value == 0) {
-                                  showAboutDialog(context:  context,
-                                  are u sure u want to delete  ??
-                                  )
-                                  deleteNote(index);
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext dialogContext) {
+                                      return AlertDialog(
+                                        title: const Icon(Icons.info),
+                                        content: SizedBox(
+                                          height: 3.h,
+                                          child: Text(
+                                            "Are you sure ?",
+                                            style: GoogleFonts.lexend(
+                                              fontSize: 18.sp,
+                                            ),
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(
+                                                  dialogContext); // Close the dialog
+                                            },
+                                            child: Text(
+                                              "Cancel",
+                                              style: GoogleFonts.lexend(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              deleteNote(index);
+                                              Navigator.pop(
+                                                  dialogContext); // Close the dialog after deletion
+                                            },
+                                            child: Text(
+                                              "Delete",
+                                              style: GoogleFonts.lexend(
+                                                  color: Colors.red),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
                                 } else if (value == 1) {
                                   showEditDialog(context, index, note);
                                 }
@@ -184,10 +234,12 @@ class _HomeState extends State<Home> {
                                   value: 0,
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.delete, color: Colors.red),
+                                      const Icon(Icons.delete,
+                                          color: Colors.red),
                                       const SizedBox(width: 10),
                                       Text("Delete",
-                                          style: GoogleFonts.lexend(fontSize: 14)),
+                                          style:
+                                              GoogleFonts.lexend(fontSize: 14)),
                                     ],
                                   ),
                                 ),
@@ -195,10 +247,12 @@ class _HomeState extends State<Home> {
                                   value: 1,
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.edit, color: Colors.blue),
+                                      const Icon(Icons.edit,
+                                          color: Colors.blue),
                                       const SizedBox(width: 10),
                                       Text("Edit",
-                                          style: GoogleFonts.lexend(fontSize: 14)),
+                                          style:
+                                              GoogleFonts.lexend(fontSize: 14)),
                                     ],
                                   ),
                                 ),
@@ -218,8 +272,23 @@ class _HomeState extends State<Home> {
             elevation: 10,
             backgroundColor: Colors.white38,
             shape: const CircleBorder(),
-            onPressed: () {
-              // Add note action
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Notepad()),
+              );
+
+              if (result != null) {
+                setState(() {
+                  notes.add(Note(
+                      id: notes.length,
+                      title: result[0],
+                      content: result[1],
+                      modifiedTime: DateTime.now())); 
+                      filteredNotes = notes;
+                      // Fixed 'od' typo
+                }); // Refresh UI
+              }
             },
             child: const Icon(
               Icons.add,
