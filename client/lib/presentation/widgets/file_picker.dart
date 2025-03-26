@@ -1,20 +1,82 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 
-class FilePickerWidget extends StatefulWidget {
-  const FilePickerWidget({super.key});
+class CustomFilePicker extends StatefulWidget {
+  final Function(String?) onFilePicked;
+
+  const CustomFilePicker({super.key, required this.onFilePicked});
 
   @override
-  State<FilePickerWidget> createState() => _FilePickerWidgetState();
+  State<CustomFilePicker> createState() => _CustomFilePickerState();
 }
 
-class _FilePickerWidgetState extends State<FilePickerWidget> {
+class _CustomFilePickerState extends State<CustomFilePicker> {
+  String? fileName;
+  
+  Future<void> pickFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      
+      if (result == null || result.files.single.path == null) {
+        print("No file selected!");
+        return;
+      }
+
+      String fullFileName = result.files.single.name;
+      String extension = fullFileName.split('.').last;
+      String shortName = fullFileName.length > 5 
+          ? "${fullFileName.substring(0, 5)}... .$extension"
+          : fullFileName;
+
+      setState(() {
+        fileName = shortName;
+      });
+
+      String filePath = result.files.single.path!;
+      print("Selected file: $filePath");
+      widget.onFilePicked(filePath);
+    } catch (e) {
+      print("File picking error: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Sizer(
-      builder: (context, orientation, deviceType){
-        return 
-      }
+    return SizedBox(
+      child: ElevatedButton(
+                            
+                              onPressed: (){}, 
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)
+                              ),
+                              backgroundColor: Colors.white,
+                              elevation: 5,
+                              
+                            ),
+                            child: Column(
+                              children: [
+                                SizedBox(height: 10.h,),
+                                Text("Pick file 📁",
+                                style: GoogleFonts.lexend(
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.normal,
+                                color: Colors.black54,
+                                                        ),
+                                ),
+                                SizedBox(height: 2.h,),
+                                Text("(.pdf)",
+                                style: GoogleFonts.lexend(
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.normal,
+                                color: Colors.black54,
+                                                        ),
+                                )
+                              ],
+                            )
+                            ),
     );
   }
 }
