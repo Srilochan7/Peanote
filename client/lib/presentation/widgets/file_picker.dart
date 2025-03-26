@@ -47,7 +47,8 @@ class _CustomFilePickerState extends State<CustomFilePicker> {
     return SizedBox(
       child: ElevatedButton(
                             
-                              onPressed: (){}, 
+                              onPressed: pickFile,
+
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)

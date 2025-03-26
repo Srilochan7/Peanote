@@ -37,7 +37,7 @@ extension NoteCategoryExtension on NoteCategory {
       case NoteCategory.todo:
         return 'To-Do';
       case NoteCategory.miscellaneous:
-        return 'Misc';
+        return 'Others';
     }
   }
 

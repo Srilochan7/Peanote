@@ -3,8 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 
-class Summarizer extends StatelessWidget {
+class Summarizer extends StatefulWidget {
   const Summarizer({super.key});
+
+  @override
+  State<Summarizer> createState() => _SummarizerState();
+}
+
+class _SummarizerState extends State<Summarizer> {
+  String? selectedFilePath;
 
   @override
   Widget build(BuildContext context) {
@@ -16,54 +23,38 @@ class Summarizer extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // Aligns text to left
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Back button and title
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          width: 10.w,
-                          height: 5.h,
-                          decoration: BoxDecoration(
-                            color: Colors.white38,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.black87,
-                          ),
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                      SizedBox(width: 3.w),
+                      const SizedBox(width: 10),
                       Text(
                         "AI Summarizer",
                         style: GoogleFonts.lexend(
-                          fontSize: 20.sp,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 2.h),
+                   SizedBox(height: 2.h),
 
-                  /// Instruction text (Left-aligned)
                   Text(
                     "Choose the file you want to summarise:",
                     style: GoogleFonts.lexend(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.normal,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
                   ),
-                  SizedBox(height: 2.h),
+                  const SizedBox(height: 20),
 
-                  /// Centered File Picker
                   Center(
                     child: SizedBox(
                       height: 30.h,
@@ -71,6 +62,9 @@ class Summarizer extends StatelessWidget {
                       child: CustomFilePicker(
                         onFilePicked: (filePath) {
                           if (filePath != null) {
+                            setState(() {
+                              selectedFilePath = filePath;
+                            });
                             print("Selected file path: $filePath");
                           } else {
                             print("No file selected!");
@@ -79,66 +73,58 @@ class Summarizer extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 3.h),
+                  const SizedBox(height: 30),
 
-                  /// "What you will get" Section (Left-aligned)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "What you will get?",
-                        style: GoogleFonts.lexend(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      SizedBox(height: 1.h),
-                      Text(
-                        "• AI-generated summary of the notes. 📝 ",
-                        style: GoogleFonts.lexend(
-                          fontSize: 16.sp,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      SizedBox(height: 0.5.h),
-                      Text(
-                        "• Give a shorter bullet points of notes. 📋",
-                        style: GoogleFonts.lexend(
-                          fontSize: 16.sp,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      SizedBox(height: 0.5.h),
-                      Text(
-                        "• Explain the important terms. 🖋️",
-                        style: GoogleFonts.lexend(
-                          fontSize: 16.sp,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      SizedBox(height: 0.5.h),
-                      Text(
-                        "• Small QnAs ❓",
-                        style: GoogleFonts.lexend(
-                          fontSize: 16.sp,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      SizedBox(height: 0.5.h),
-                      Text(
-                        "• Can download the summary notes. ⬇️ ",
-                        style: GoogleFonts.lexend(
-                          fontSize: 16.sp,
-                          color: Colors.black87,
-                        ),
-                      ),
-
-                      ElevatedButton(onPressed: (){
-
-                      }, child: Text("Generate ✨"))
-                    ],
+                  Text(
+                    "What you will get?",
+                    style: GoogleFonts.lexend(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
+                  const SizedBox(height: 10),
+                  
+                  ...["• AI-generated summary of the notes 📝",
+                      "• Give a shorter bullet points of notes 📋",
+                      "• Explain the important terms 🖋️",
+                      "• Small QnAs ❓",
+                      "• Can download the summary notes ⬇️"]
+                    .map((feature) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: Text(
+                            feature,
+                            style: GoogleFonts.lexend(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+
+                  const SizedBox(height: 30),
+
+                  Center(
+                    child: ElevatedButton(onPressed: (){
+
+                    }, 
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(255, 205, 221, 254),
+                        shape: RoundedRectangleBorder(  
+                          borderRadius: BorderRadius.circular(12)
+                                         ),
+                        
+                    ),
+                    child: Text("Analyze ✨",
+                     style: GoogleFonts.lexend(
+                                  fontSize: 23.sp,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                    )),
+
+),
+
                 ],
               ),
             ),
