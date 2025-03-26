@@ -1,5 +1,8 @@
 
 import 'package:counter_x/presentation/ui/home.dart';
+import 'package:counter_x/presentation/ui/practice.dart';
+import 'package:counter_x/presentation/ui/profile.dart';
+import 'package:counter_x/presentation/ui/summarizer.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -16,7 +19,9 @@ class _BottomNavbarState extends State<BottomNavbar> {
 
   final List<Widget> _screens = [
     Home(),
-    
+    Summarizer(),
+    Practice(),
+    Profile()
   ];
 
   void _onItemTapped(int i) {
@@ -44,9 +49,9 @@ class _BottomNavbarState extends State<BottomNavbar> {
             currentIndex: _selectedIndex, 
             onTap: _onItemTapped, 
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Shop'),
-              BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Cart'),
+              BottomNavigationBarItem(icon: Icon(Icons.note), label: 'All notes'),
+              BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Summarizer'),
+              BottomNavigationBarItem(icon: Icon(Icons.memory), label: 'Practice'),
               BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
             ],
           ),

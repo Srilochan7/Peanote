@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:counter_x/models/note_model.dart';
 import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +17,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   List<Note> filteredNotes = [];
   bool sorted = false;
+  NoteCategory? selectedCategory;
 
   @override
   void initState() {
@@ -41,6 +44,13 @@ class _HomeState extends State<Home> {
     });
   }
 
+  void filterByCategory(NoteCategory category) {
+    setState(() {
+      selectedCategory = category;
+      filteredNotes = notes.where((note) => note.category == category).toList();
+    });
+  }
+
   void deleteNote(int index) {
     setState(() {
       filteredNotes.removeAt(index);
@@ -60,6 +70,7 @@ class _HomeState extends State<Home> {
           body: Padding(
             padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -124,7 +135,50 @@ class _HomeState extends State<Home> {
                     ),
                   ),
                 ),
-                SizedBox(height: 3.h),
+                SizedBox(height: 1.h),
+                // Category Filter Chips
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: NoteCategory.values.map((category) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: ChoiceChip(
+                        label: Text(
+                          category.label,
+                          style: GoogleFonts.lexend(
+                            fontSize: 15.sp,
+                            color: selectedCategory == category 
+                                ? Colors.white 
+                                : category.iconColor,
+                          ),
+                        ),
+                        selected: selectedCategory == category,
+                        onSelected: (_) {
+                          setState(() {
+                            if (selectedCategory == category) {
+                              selectedCategory = null;
+                              filteredNotes = notes;
+                            } else {
+                              filterByCategory(category);
+                            }
+                          });
+                        },
+                        selectedColor: category.iconColor,
+                        backgroundColor: category.color,
+                        avatar: selectedCategory == category
+                            ? null // Hide the icon when selected
+                            : Icon(
+                                _getCategoryIcon(category),
+                                color: category.iconColor,
+                              ),
+                      )
+
+                      );
+                    }).toList(),
+                  ),
+                ),
+                SizedBox(height: 1.h),
                 Expanded(
                   child: ListView.builder(
                     itemCount: filteredNotes.length,
@@ -133,21 +187,51 @@ class _HomeState extends State<Home> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10.0),
                         child: Card(
+                          color: note.category.color,
                           elevation: 4,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: note.category.iconColor.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                _getCategoryIcon(note.category),
+                                color: note.category.iconColor,
+                              ),
+                            ),
                             onTap: () async {
-                              final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => Notepad(note: filteredNotes[index],)));
+                              final result = await Navigator.push(
+                                context, 
+                                MaterialPageRoute(
+                                  builder: (context) => Notepad(note: filteredNotes[index])
+                                )
+                              );
 
                               if (result != null) {
-                setState(() {
-                  int oi = notes.indexOf(filteredNotes[index]);
-                  
-                  notes[oi] = Note(id: notes[oi].id, title: result[0], content: result[1], modifiedTime: DateTime.now());
-                }); // Refresh UI
-              }
+                                setState(() {
+                                  int oi = notes.indexOf(filteredNotes[index]);
+                                  
+                                  notes[oi] = Note(
+                                    id: notes[oi].id, 
+                                    title: result[0], 
+                                    content: result[1], 
+                                    modifiedTime: DateTime.now(),
+                                    category: result[2] ?? notes[oi].category
+                                  );
+                                  
+                                  // Reapply current filtering
+                                  if (selectedCategory != null) {
+                                    filteredNotes = notes.where((note) => note.category == selectedCategory).toList();
+                                  } else {
+                                    filteredNotes = notes;
+                                  }
+                                });
+                              }
                             },
                             title: RichText(
                               maxLines: 3,
@@ -155,7 +239,7 @@ class _HomeState extends State<Home> {
                               text: TextSpan(
                                 text: "${note.title} \n",
                                 style: GoogleFonts.lexend(
-                                  fontSize: 19.sp,
+                                  fontSize: 17.sp,
                                   color: Colors.black87,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -163,7 +247,7 @@ class _HomeState extends State<Home> {
                                   TextSpan(
                                     text: note.content,
                                     style: GoogleFonts.lexend(
-                                      fontSize: 15.sp,
+                                      fontSize: 14.sp,
                                       color: Colors.black87,
                                     ),
                                   ),
@@ -176,7 +260,7 @@ class _HomeState extends State<Home> {
                                 "Edited ${DateFormat('dd MMM yyyy, hh:mm a').format(note.modifiedTime)}",
                                 style: GoogleFonts.lexend(
                                   fontSize: 10,
-                                  color: Colors.black87,
+                                  color: Colors.black54,
                                 ),
                               ),
                             ),
@@ -200,8 +284,7 @@ class _HomeState extends State<Home> {
                                         actions: [
                                           TextButton(
                                             onPressed: () {
-                                              Navigator.pop(
-                                                  dialogContext); // Close the dialog
+                                              Navigator.pop(dialogContext);
                                             },
                                             child: Text(
                                               "Cancel",
@@ -212,8 +295,7 @@ class _HomeState extends State<Home> {
                                           TextButton(
                                             onPressed: () {
                                               deleteNote(index);
-                                              Navigator.pop(
-                                                  dialogContext); // Close the dialog after deletion
+                                              Navigator.pop(dialogContext);
                                             },
                                             child: Text(
                                               "Delete",
@@ -226,7 +308,7 @@ class _HomeState extends State<Home> {
                                     },
                                   );
                                 } else if (value == 1) {
-                                  showEditDialog(context, index, note);
+                                  
                                 }
                               },
                               itemBuilder: (context) => [
@@ -281,13 +363,20 @@ class _HomeState extends State<Home> {
               if (result != null) {
                 setState(() {
                   notes.add(Note(
-                      id: notes.length,
-                      title: result[0],
-                      content: result[1],
-                      modifiedTime: DateTime.now())); 
-                      filteredNotes = notes;
-                      // Fixed 'od' typo
-                }); // Refresh UI
+                    id: notes.length,
+                    title: result[0],
+                    content: result[1],
+                    modifiedTime: DateTime.now(),
+                    category: result[2] ?? NoteCategory.miscellaneous,
+                  )); 
+                  
+                  // Reapply current filtering
+                  if (selectedCategory != null) {
+                    filteredNotes = notes.where((note) => note.category == selectedCategory).toList();
+                  } else {
+                    filteredNotes = notes;
+                  }
+                });
               }
             },
             child: const Icon(
@@ -299,5 +388,22 @@ class _HomeState extends State<Home> {
         );
       },
     );
+  }
+
+  // Helper method to get icons for categories
+  IconData _getCategoryIcon(NoteCategory category) {
+    switch (category) {
+      case NoteCategory.personal:
+        return Icons.person;
+      case NoteCategory.work:
+        return Icons.work;
+      case NoteCategory.ideas:
+        return Icons.lightbulb;
+      case NoteCategory.todo:
+        return Icons.checklist;
+      case NoteCategory.miscellaneous:
+      default:
+        return Icons.category;
+    }
   }
 }
