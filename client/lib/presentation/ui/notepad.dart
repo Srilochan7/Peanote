@@ -209,13 +209,13 @@ class _NotepadState extends State<Notepad> {
   // Helper method to get icons for categories
   IconData _getCategoryIcon(NoteCategory category) {
     switch (category) {
-      case NoteCategory.personal:
+      case NoteCategory.lectureNotes:
         return Icons.person;
-      case NoteCategory.work:
+      case NoteCategory.research:
         return Icons.work;
-      case NoteCategory.ideas:
+      case NoteCategory.examPrep:
         return Icons.lightbulb;
-      case NoteCategory.todo:
+      case NoteCategory.assignments:
         return Icons.checklist;
       case NoteCategory.miscellaneous:
       default:
