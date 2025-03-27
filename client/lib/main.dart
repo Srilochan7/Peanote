@@ -1,6 +1,7 @@
 
 import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/presentation/ui/home.dart';
+import 'package:counter_x/presentation/ui/onboarding/on_board.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: MainScreen(),
+      home: Onboard(),
     );
   }
 }
