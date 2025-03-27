@@ -55,10 +55,13 @@ class _PracticeState extends State<Practice> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Top Navigation Row
+                     SizedBox(height: 5.h,),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Container(
+                           width: 10.w,
+                          height: 5.h,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
@@ -71,7 +74,7 @@ class _PracticeState extends State<Practice> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.black),
+                            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 18),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
@@ -79,7 +82,7 @@ class _PracticeState extends State<Practice> {
                         Text(
                           "Practice Quiz",
                           style: GoogleFonts.lexend(
-                            fontSize: 22.sp,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.black87,
                           ),

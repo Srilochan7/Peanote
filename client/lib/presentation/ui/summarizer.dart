@@ -26,11 +26,14 @@ class _SummarizerState extends State<Summarizer> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    SizedBox(height: 5.h,),
                     // Top Navigation Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Container(
+                          width: 10.w,
+                          height: 5.h,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
@@ -43,7 +46,7 @@ class _SummarizerState extends State<Summarizer> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.black),
+                            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 18,),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
@@ -51,7 +54,7 @@ class _SummarizerState extends State<Summarizer> {
                         Text(
                           "AI Summarizer",
                           style: GoogleFonts.lexend(
-                            fontSize: 22.sp,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.black87,
                           ),
@@ -88,17 +91,19 @@ class _SummarizerState extends State<Summarizer> {
                           ],
                         ),
                         child: CustomFilePicker(
-                          onFilePicked: (filePath) {
-                            if (filePath != null) {
-                              setState(() {
-                                selectedFilePath = filePath;
-                              });
-                              print("Selected file path: $filePath");
-                            } else {
-                              print("No file selected!");
-                            }
-                          },
-                        ),
+  onFilePicked: (filePath) {
+    if (filePath != null) {
+      setState(() {
+        selectedFilePath = filePath.split('/').last; // Extract file name only
+      });
+      print("Selected file path: $filePath");
+    } else {
+      print("No file selected!");
+    }
+  },
+),
+
+
                       ),
                     ),
                     SizedBox(height: 3.h),

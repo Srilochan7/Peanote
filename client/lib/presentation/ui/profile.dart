@@ -29,25 +29,40 @@ class _ProfileState extends State<Profile> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // App Bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        "Profile",
-                        style: GoogleFonts.lexend(
-                          fontSize: 21,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                   SizedBox(height: 1.h,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Container(
+                           width: 10.w,
+                          height: 5.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.shade200,
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 18),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                        SizedBox(width: 3.w),
+                        Text(
+                          "Profile",
+                          style: GoogleFonts.lexend(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
                   
                   const SizedBox(height: 20),
 
