@@ -1,6 +1,7 @@
 import 'package:counter_x/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:sizer/sizer.dart';
 
 class Onboard extends StatelessWidget {
@@ -20,18 +21,18 @@ class Onboard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Microscope Image
-                  // Image.asset(
-                  //   'assets/images/microscope.png', // Make sure to add this image to your assets
-                  //   height: 40.h,
-                  //   width: 70.w,
-                  //   fit: BoxFit.contain,
-                  // ),
+                  Lottie.asset(
+                    'assets/animation.json', // Make sure to add this image to your assets
+                    height: 40.h,
+                    width: 70.w,
+                    fit: BoxFit.contain,
+                  ),
 
                   SizedBox(height: 4.h),
 
                   // Title
                   Text(
-                    "All Your Notes In One Place",
+                    "Your AI Study Assistant 🥜",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.lexend(
                       fontSize: 22.sp,
@@ -44,7 +45,7 @@ class Onboard extends StatelessWidget {
 
                   // Subtitle
                   Text(
-                    "Take notes & manage your notes with ease on sticky",
+                   "Auto-summarize, organize, and quiz yourself effortlessly with AI-driven notes.",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.lexend(
                       fontSize: 16.sp,
