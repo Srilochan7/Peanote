@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:counter_x/presentation/widgets/file_picker.dart';
+import 'package:counter_x/response_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:sizer/sizer.dart';
 
 class Summarizer extends StatefulWidget {
@@ -13,12 +17,64 @@ class Summarizer extends StatefulWidget {
 class _SummarizerState extends State<Summarizer> {
   String? selectedFilePath;
 
+  Future<void> sendFileToServer(String filePath) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      var uri = Uri.parse("http://10.0.2.2:5000/upload");
+      var request = http.MultipartRequest('POST', uri);
+
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      // Remove loading dialog
+      Navigator.pop(context);
+
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        
+        // Simplified response extraction
+        String analysisText = jsonResponse['summary'] ?? "No summary available";
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResponsePage(
+              responseText: analysisText, 
+              responseData: jsonResponse
+            ),
+          ),
+        );
+      } else {
+        // Handle error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload file: ${response.statusCode}'))
+        );
+      }
+    } catch (e) {
+      // Remove loading dialog if it's still showing
+      Navigator.pop(context);
+
+      // Handle network or parsing errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'))
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Sizer(
       builder: (context, orientation, deviceType) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F5FA), // Softer background color
+          backgroundColor: const Color(0xFFF5F5FA),
           body: SafeArea(
             child: SingleChildScrollView(
               child: Padding(
@@ -91,19 +147,17 @@ class _SummarizerState extends State<Summarizer> {
                           ],
                         ),
                         child: CustomFilePicker(
-  onFilePicked: (filePath) {
-    if (filePath != null) {
-      setState(() {
-        selectedFilePath = filePath.split('/').last; // Extract file name only
-      });
-      print("Selected file path: $filePath");
-    } else {
-      print("No file selected!");
-    }
-  },
-),
-
-
+                          onFilePicked: (filePath) {
+                            if (filePath != null) {
+                              setState(() {
+                                selectedFilePath = filePath;
+                              });
+                              print("Selected file path: $filePath");
+                            } else {
+                              print("No file selected!");
+                            }
+                          },
+                        ),
                       ),
                     ),
                     SizedBox(height: 3.h),
@@ -153,9 +207,9 @@ class _SummarizerState extends State<Summarizer> {
                     // Analyze Button
                     Center(
                       child: ElevatedButton(
-                        onPressed: selectedFilePath != null ? () {
-                          // TODO: Implement analysis logic
-                        } : null,
+                        onPressed: selectedFilePath != null 
+                          ? () => sendFileToServer(selectedFilePath!)
+                          : null,
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: selectedFilePath != null 

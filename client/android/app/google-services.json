@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "803749545768",
+    "project_id": "authex-72165",
+    "storage_bucket": "authex-72165.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803749545768:android:7d511e18b5be94d47f721d",
+        "android_client_info": {
+          "package_name": "com.example.counter_x"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDB81xvdD45hJfkrJvqVeRhMjiv8xdXIGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

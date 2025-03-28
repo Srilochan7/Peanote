@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:counter_x/models/note_model.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
+import 'package:http/http.dart' as http;
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -60,6 +62,7 @@ class _HomeState extends State<Home> {
   void showEditDialog(BuildContext context, int index, Note note) {
     // Placeholder function for editing logic
   }
+   
 
 
   @override
