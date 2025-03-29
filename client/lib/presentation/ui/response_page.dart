@@ -31,9 +31,12 @@ class _ResponsePageState extends State<ResponsePage> {
     // Simulating an API call or text generation process
     await Future.delayed(const Duration(seconds: 3));
     setState(() {
-      responseText = widget.responseText;
+      responseText = widget.responseText.isNotEmpty
+      ? widget.responseText 
+      : "No response available";
       _isLoading = false;
     });
+    print("Received Response in ResponsePage: $responseText");
   }
 
   @override

@@ -35,7 +35,7 @@ class _CustomFilePickerState extends State<CustomFilePicker> {
       });
 
       String filePath = result.files.single.path!;
-      print("Selected file: $filePath");
+      print("Selected file: $filePath ");
       widget.onFilePicked(filePath);
     } catch (e) {
       print("File picking error: $e");
@@ -54,7 +54,7 @@ class _CustomFilePickerState extends State<CustomFilePicker> {
         ),
         child: Column(
           children: [
-            SizedBox(height: 10.h),
+            SizedBox(height: 14.h),
             Text(
               fileName ?? "Pick file 📁", // Show file name after selection
               style: GoogleFonts.lexend(

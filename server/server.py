@@ -46,20 +46,17 @@ def extract_text(pdf_path):
         text += page.get_text("text") + "\n"
     return text.strip()
 
-def call_gemini_api(text, doc_name):
+def call_gemini_api(text):
     """Call the Gemini API with extracted text and a predefined prompt."""
     
     # Predefined prompt for legal document analysis
     prompt = (
-    f"You are a legal assistant from India with expertise in the Indian Judicial System. Analyze the document {doc_name} and provide the following:\n\n"
-    "1. Summary: A brief and clear summary.\n"
-    "2. Legal Terms: Explain complex legal terms in simple language.\n"
-    "3. Risks: Identify any legal or financial risks.\n"
-    "4. Recommendations: Provide actionable suggestions.\n\n"
-    "If the document is not legal, respond with: 'Not a legal document.'\n"
-    "Maintain clarity and conciseness. Do not use symbols only. The output length should match the document’s complexity and content."
-)
-
+    f"You are my ultimate last-minute study buddy! I'll share my notes, and your job is to:\n\n"
+    "1. **Summarize** – Provide a **clear and concise** version of the key takeaways. **No fluff, just the essentials.**\n"
+    "2. **Explain Terms** – Break down any complex words or concepts **in the simplest way possible**, as if explaining to a 10-year-old.\n"
+    "3. **Check Readability** – If the notes are too messy or unclear, respond with: *'Your notes are unclear—please refine and try again.'*\n\n"
+    "Be **quick, smart, and effective**—my exam depends on this!"
+    )
 
     # API request body (Correct Format)
     data = {
@@ -129,7 +126,7 @@ def upload_file():
         print(f"📄 Successfully extracted text from {file.filename} ({len(text)} characters)")
         
         # Call Gemini API with the extracted text
-        gemini_response = call_gemini_api(text, file.filename)
+        gemini_response = call_gemini_api(text)
         
         # Clean up the uploaded file
         os.remove(file_path)
@@ -143,6 +140,7 @@ def upload_file():
             os.remove(file_path)
         print(f"❌ Error processing file: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 # Check available models at startup
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:counter_x/presentation/widgets/file_picker.dart';
-import 'package:counter_x/response_page.dart';
+import 'package:counter_x/presentation/ui/response_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -20,11 +20,7 @@ class _SummarizerState extends State<Summarizer> {
   Future<void> sendFileToServer(String filePath) async {
     try {
       // Show loading dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
+     
 
       var uri = Uri.parse("http://10.0.2.2:5000/upload");
       var request = http.MultipartRequest('POST', uri);
@@ -39,9 +35,10 @@ class _SummarizerState extends State<Summarizer> {
 
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
-        
-        // Simplified response extraction
-        String analysisText = jsonResponse['summary'] ?? "No summary available";
+print("API Response: $jsonResponse"); // Debugging line
+
+String analysisText = jsonResponse['summary'] ?? "No summary available";
+print("Extracted Summary: $analysisText"); // Debugging line
 
         Navigator.push(
           context,
