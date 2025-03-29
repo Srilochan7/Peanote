@@ -16,11 +16,26 @@ class Summarizer extends StatefulWidget {
 
 class _SummarizerState extends State<Summarizer> {
   String? selectedFilePath;
+  bool isLoading = false;
 
   Future<void> sendFileToServer(String filePath) async {
+    setState(() {
+      isLoading = true;
+    });
+
     try {
       // Show loading dialog
-     
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Colors.deepPurple,
+            ),
+          );
+        },
+      );
 
       var uri = Uri.parse("http://10.0.2.2:5000/upload");
       var request = http.MultipartRequest('POST', uri);
@@ -31,14 +46,53 @@ class _SummarizerState extends State<Summarizer> {
       var response = await http.Response.fromStream(streamedResponse);
 
       // Remove loading dialog
-      Navigator.pop(context);
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      
+      setState(() {
+        isLoading = false;
+      });
 
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
-print("API Response: $jsonResponse"); // Debugging line
-
-String analysisText = jsonResponse['summary'] ?? "No summary available";
-print("Extracted Summary: $analysisText"); // Debugging line
+        print("API Response Status Code: ${response.statusCode}");
+        print("API Response Content Type: ${response.headers['content-type']}");
+        
+        // Extract the text from the Gemini API response structure
+        String analysisText = "No content available";
+        
+        try {
+          // Check if error key exists in the response
+          if (jsonResponse.containsKey('error')) {
+            analysisText = "Error: ${jsonResponse['error']}";
+          }
+          // Navigate through the Gemini API response structure
+          else if (jsonResponse.containsKey('candidates') && 
+              jsonResponse['candidates'] is List && 
+              jsonResponse['candidates'].isNotEmpty) {
+            
+            var candidate = jsonResponse['candidates'][0];
+            if (candidate.containsKey('content') && 
+                candidate['content'].containsKey('parts') && 
+                candidate['content']['parts'] is List && 
+                candidate['content']['parts'].isNotEmpty) {
+              
+              analysisText = candidate['content']['parts'][0]['text'];
+            }
+          }
+          // Handle alternative response format if necessary
+          else {
+            print("Response Structure: ${jsonResponse.keys.toList()}");
+            // Try to find text content in the response structure
+            analysisText = _findTextInResponse(jsonResponse) ?? "Could not extract text from response.";
+          }
+        } catch (e) {
+          print("Error extracting text from response: $e");
+          analysisText = "Error parsing response: $e";
+        }
+        
+        print("Extracted Text Preview: ${analysisText.substring(0, analysisText.length > 100 ? 100 : analysisText.length)}...");
 
         Navigator.push(
           context,
@@ -52,18 +106,57 @@ print("Extracted Summary: $analysisText"); // Debugging line
       } else {
         // Handle error
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload file: ${response.statusCode}'))
+          SnackBar(
+            content: Text('Failed to upload file: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          )
         );
+        print("Error response body: ${response.body}");
       }
     } catch (e) {
       // Remove loading dialog if it's still showing
-      Navigator.pop(context);
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      
+      setState(() {
+        isLoading = false;
+      });
 
       // Handle network or parsing errors
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'))
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        )
       );
+      print("Exception during file upload: $e");
     }
+  }
+
+  // Helper function to recursively find text in response
+  String? _findTextInResponse(dynamic json) {
+    if (json is Map) {
+      // Try common keys that might contain the response text
+      if (json.containsKey('text')) return json['text'];
+      if (json.containsKey('content')) return _findTextInResponse(json['content']);
+      if (json.containsKey('message')) return json['message'];
+      
+      // Recursively search through all keys
+      for (var key in json.keys) {
+        final result = _findTextInResponse(json[key]);
+        if (result != null) return result;
+      }
+    } else if (json is List) {
+      for (var item in json) {
+        final result = _findTextInResponse(item);
+        if (result != null) return result;
+      }
+    } else if (json is String && json.trim().isNotEmpty && json.length > 50) {
+      // If we find a substantial string, it might be our response
+      return json;
+    }
+    return null;
   }
 
   @override
@@ -118,7 +211,7 @@ print("Extracted Summary: $analysisText"); // Debugging line
 
                     // File Selection Title
                     Text(
-                      "Choose the file you want to summarise:",
+                      "Choose the file you want to summarize:",
                       style: GoogleFonts.lexend(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
@@ -204,12 +297,12 @@ print("Extracted Summary: $analysisText"); // Debugging line
                     // Analyze Button
                     Center(
                       child: ElevatedButton(
-                        onPressed: selectedFilePath != null 
+                        onPressed: (selectedFilePath != null && !isLoading)
                           ? () => sendFileToServer(selectedFilePath!)
                           : null,
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          backgroundColor: selectedFilePath != null 
+                          backgroundColor: (selectedFilePath != null && !isLoading)
                             ? Colors.deepPurple 
                             : Colors.grey.shade400,
                           minimumSize: Size(80.w, 6.h),
@@ -218,14 +311,23 @@ print("Extracted Summary: $analysisText"); // Debugging line
                           ),
                           elevation: 5,
                         ),
-                        child: Text(
-                          "Analyze ✨",
-                          style: GoogleFonts.lexend(
-                            fontSize: 18.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              "Analyze ✨",
+                              style: GoogleFonts.lexend(
+                                fontSize: 18.sp,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                       ),
                     ),
                   ],

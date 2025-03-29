@@ -3,6 +3,7 @@ import fitz  # PyMuPDF for PDF text extraction
 import os
 import requests
 from dotenv import load_dotenv
+import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -10,6 +11,14 @@ load_dotenv()
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Add CORS support
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # Load Gemini API keys from environment variables
 GEMINI_API_KEYS = os.getenv("GEMINI_API_KEYS", "").split(",")
@@ -117,6 +126,12 @@ def upload_file():
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
+    
+    # Check file type
+    allowed_extensions = ['.pdf', '.txt', '.doc', '.docx']
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in allowed_extensions:
+        return jsonify({"error": f"Unsupported file type. Please upload {', '.join(allowed_extensions)} files"}), 400
 
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
@@ -131,7 +146,22 @@ def upload_file():
         # Clean up the uploaded file
         os.remove(file_path)
         
+        # If there's an error in the response
+        if "error" in gemini_response:
+            print(f"❌ Error from Gemini API: {gemini_response['error']}")
+            # Create a simplified error response for the client
+            return jsonify({
+                "candidates": [{
+                    "content": {
+                        "parts": [{
+                            "text": f"Error processing document: {gemini_response['error']}"
+                        }]
+                    }
+                }]
+            }), 200
+        
         # Return the Gemini API response
+        print("✅ Successfully generated response from Gemini API")
         return jsonify(gemini_response), 200
 
     except Exception as e:
@@ -139,7 +169,16 @@ def upload_file():
         if os.path.exists(file_path):
             os.remove(file_path)
         print(f"❌ Error processing file: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        # Create a simplified error response for the client
+        return jsonify({
+            "candidates": [{
+                "content": {
+                    "parts": [{
+                        "text": f"Error processing document: {str(e)}"
+                    }]
+                }
+            }]
+        }), 200
 
 
 # Check available models at startup
@@ -159,4 +198,4 @@ if __name__ == "__main__":
     
     port = int(os.getenv("PORT", 5000))
     print(f"🚀 Starting Flask server on port {port}")
-    app.run(debug=True, port=port)
+    app.run(debug=True, host="0.0.0.0", port=port)

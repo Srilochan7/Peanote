@@ -29,14 +29,15 @@ class _ResponsePageState extends State<ResponsePage> {
 
   void _fetchResponse() async {
     // Simulating an API call or text generation process
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 2));
     setState(() {
       responseText = widget.responseText.isNotEmpty
       ? widget.responseText 
       : "No response available";
       _isLoading = false;
     });
-    print("Received Response in ResponsePage: $responseText");
+    print("Received Response in ResponsePage: ${responseText.substring(0, 
+      responseText.length > 100 ? 100 : responseText.length)}...");
   }
 
   @override
@@ -56,6 +57,17 @@ class _ResponsePageState extends State<ResponsePage> {
             ),
             backgroundColor: const Color(0xFF001029),
             iconTheme: const IconThemeData(color: Colors.white),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.copy),
+                onPressed: () {
+                  // Add copy to clipboard functionality
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Analysis copied to clipboard'))
+                  );
+                },
+              ),
+            ],
           ),
           body: _isLoading 
             ? _buildFullPageShimmer() 
@@ -94,12 +106,25 @@ class _ResponsePageState extends State<ResponsePage> {
   Widget _buildResponse() {
     return SingleChildScrollView(
       padding: EdgeInsets.all(5.w),
-      child: Text(
-        responseText,
-        style: GoogleFonts.bricolageGrotesque(
-          fontSize: 16,
-          color: Colors.white,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(4.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFF001639),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              responseText,
+              style: GoogleFonts.bricolageGrotesque(
+                fontSize: 16,
+                color: Colors.white,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
