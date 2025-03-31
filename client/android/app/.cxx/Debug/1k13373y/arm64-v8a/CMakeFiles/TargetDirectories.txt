@@ -1,0 +1,2 @@
+C:/Users/kalak/Downloads/Desktop/Peanote/client/android/app/.cxx/Debug/1k13373y/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/kalak/Downloads/Desktop/Peanote/client/android/app/.cxx/Debug/1k13373y/arm64-v8a/CMakeFiles/rebuild_cache.dir
