@@ -1,6 +1,6 @@
 import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
-import 'package:counter_x/presentation/ui/auth/signin.dart';
+import 'package:counter_x/presentation/ui/auth/signup.dart';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -61,7 +61,7 @@ class Onboard extends StatelessWidget {
                   // Create Account Button
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>SignUp()));
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>SignUp()), (route)=>false);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
@@ -85,7 +85,7 @@ class Onboard extends StatelessWidget {
                   // Login Button
                   OutlinedButton(
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Login()), (route)=>false);
                     },
                     style: OutlinedButton.styleFrom(
                       minimumSize: Size(90.w, 6.h),

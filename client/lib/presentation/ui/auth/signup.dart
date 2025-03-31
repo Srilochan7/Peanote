@@ -41,14 +41,13 @@ class _SignUpState extends State<SignUp> {
         }
         else if(state is AuthSuccess){
           Navigator.pop(context);
-          Navigator.pushAndRemoveUntil(
+          Navigator.pushReplacement(
             context,
             PageTransition(
               type: PageTransitionType.fade, // Fade transition
               child: MainScreen(),
               duration: Duration(milliseconds: 500), // Optional: Adjust duration as needed
             ),
-            (route) => false,
           );
           }
       },
@@ -83,7 +82,7 @@ class _SignUpState extends State<SignUp> {
                         Text(
                           "Sign up to get started with your AI study assistant",
                           style: GoogleFonts.lexend(
-                            fontSize: 15.sp,
+                            fontSize: 16.sp,
                             color: Colors.grey.shade600,
                           ),
                         ),
@@ -120,7 +119,7 @@ class _SignUpState extends State<SignUp> {
                           decoration: InputDecoration(
                             hintText: "Enter your email",
                             hintStyle: GoogleFonts.lexend(
-                              fontSize: 14.sp,
+                              fontSize: 15.sp,
                               color: Colors.grey.shade400,
                             ),
                             filled: true,
@@ -160,7 +159,7 @@ class _SignUpState extends State<SignUp> {
                         Text(
                           "Password",
                           style: GoogleFonts.lexend(
-                            fontSize: 16.sp,
+                            fontSize: 15.sp,
                             fontWeight: FontWeight.w500,
                             color: Colors.black87,
                           ),
@@ -174,7 +173,7 @@ class _SignUpState extends State<SignUp> {
                           decoration: InputDecoration(
                             hintText: "Create a password",
                             hintStyle: GoogleFonts.lexend(
-                              fontSize: 14.sp,
+                              fontSize: 15.sp,
                               color: Colors.grey.shade400,
                             ),
                             filled: true,
@@ -225,7 +224,7 @@ class _SignUpState extends State<SignUp> {
                         Text(
                           "Password must be at least 6 characters",
                           style: GoogleFonts.lexend(
-                            fontSize: 13.sp,
+                            fontSize: 14.sp,
                             color: Colors.grey.shade500,
                           ),
                         ),
@@ -236,7 +235,7 @@ class _SignUpState extends State<SignUp> {
                         ElevatedButton(
                           onPressed: () async {
                             if(_formKey.currentState!.validate()){
-                              context.read<AuthBloc>().add(LoginRequested(_emailController.text.trim(), _passwordController.text.trim()));
+                              context.read<AuthBloc>().add(SignUpRequested(_emailController.text.trim(), _passwordController.text.trim()));
                             }
                           },
                           style: ElevatedButton.styleFrom(

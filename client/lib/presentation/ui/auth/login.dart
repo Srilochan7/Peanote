@@ -1,5 +1,5 @@
 import 'package:counter_x/main_screen.dart';
-import 'package:counter_x/presentation/ui/auth/signin.dart';
+import 'package:counter_x/presentation/ui/auth/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
@@ -95,7 +95,7 @@ class _LoginState extends State<Login> {
                         decoration: InputDecoration(
                           hintText: "Enter your email",
                           hintStyle: GoogleFonts.lexend(
-                            fontSize: 14.sp,
+                            fontSize: 15.sp,
                             color: Colors.grey.shade400,
                           ),
                           filled: true,
@@ -131,7 +131,7 @@ class _LoginState extends State<Login> {
                       Text(
                         "Password",
                         style: GoogleFonts.lexend(
-                          fontSize: 16.sp,
+                          fontSize: 15.sp,
                           fontWeight: FontWeight.w500,
                           color: Colors.black87,
                         ),
@@ -145,7 +145,7 @@ class _LoginState extends State<Login> {
                         decoration: InputDecoration(
                           hintText: "Enter your password",
                           hintStyle: GoogleFonts.lexend(
-                            fontSize: 14.sp,
+                            fontSize: 15.sp,
                             color: Colors.grey.shade400,
                           ),
                           filled: true,
