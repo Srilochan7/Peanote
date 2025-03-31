@@ -62,7 +62,7 @@ class Onboard extends StatelessWidget {
                     // Create Account Button
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>SignUp()), (route)=>false);
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SignUp()));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,

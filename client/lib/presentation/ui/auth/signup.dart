@@ -31,26 +31,34 @@ class _SignUpState extends State<SignUp> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if(state is AuthLoading){
-          showDialog(context: context, builder: (_) => Center(child: CircularProgressIndicator(),));
-        }
-        else if(state is AuthFailure){
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
-        }
-        else if(state is AuthSuccess){
-          Navigator.pop(context);
-          Navigator.pushReplacement(
-            context,
-            PageTransition(
-              type: PageTransitionType.fade, // Fade transition
-              child: MainScreen(),
-              duration: Duration(milliseconds: 500), // Optional: Adjust duration as needed
-            ),
-          );
-          }
-      },
+  listener: (context, state) {
+    if (state is AuthLoading) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Center(child: CircularProgressIndicator()),
+      );
+    } else if (state is AuthFailure) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(state.message)));
+    } else if (state is AuthSuccess) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      Navigator.pushReplacement(
+        context,
+        PageTransition(
+          type: PageTransitionType.fade,
+          child: MainScreen(),
+          duration: Duration(milliseconds: 500),
+        ),
+      );
+    }
+  },
+
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return Scaffold(
