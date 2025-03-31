@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
 import 'package:equatable/equatable.dart';
@@ -38,15 +40,27 @@ on FirebaseAuthException catch(e){
 }
     }
 
-    Future<void> _onSignUpRequested(SignUpRequested event, Emitter<AuthState> emit) async{
-      try{
-        UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-          email: event.email,
-          password: event.password);
-      } on FirebaseAuthException catch(e){
-        emit(AuthFailure('SignUp error'));
-      }
+    Future<void> _onSignUpRequested(SignUpRequested event, Emitter<AuthState> emit) async {
+  emit(AuthLoading());
+  try {
+    UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+      email: event.email,
+      password: event.password,
+    );
+    emit(AuthSuccess(userCredential.user)); // <-- Emit success after signup
+  } on FirebaseAuthException catch (e) {
+    log("error msg ${e.toString()}");
+    if (e.code == 'email-already-in-use') {
+      emit(AuthFailure("This email is already in use"));
+    } else if (e.code == 'weak-password') {
+      emit(AuthFailure("Password should be at least 6 characters"));
+    } else {
+          log("error msg ${e.toString()}");
+      emit(AuthFailure("SignUp error: ${e.message}")); // Show actual error
     }
+  }
+}
+
 
     Future<void> _onLogoutRrequested(LogoutRequested event, Emitter<AuthState> emit) async{
       try{

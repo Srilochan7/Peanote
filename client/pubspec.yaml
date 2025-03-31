@@ -46,6 +46,7 @@ flutter:
 
   assets:
     - assets/  
+    
 
 # Configuration for Flutter Launcher Icons
 flutter_launcher_icons:
