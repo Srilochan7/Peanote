@@ -4,12 +4,27 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
 
 class AuthService {
-  // Sign up method
-  Future<bool> userSignUp({
+  // Sign up method with email check
+  Future<void> userSignUp({
     required String email,
     required String password,
   }) async {
     try {
+      // Check if email is already in use
+      final signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+      if (signInMethods.isNotEmpty) {
+        Fluttertoast.showToast(
+          msg: "The email is already in use.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.SNACKBAR,
+          backgroundColor: Colors.black54,
+          textColor: Colors.white,
+          fontSize: 14.sp,
+        );
+        return; // Return early if email is already in use
+      }
+
+      // Proceed to sign up
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -23,7 +38,6 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      return true;
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'weak-password') {
@@ -42,7 +56,6 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      return false;
     } catch (e) {
       Fluttertoast.showToast(
         msg: "An unexpected error occurred: $e",
@@ -52,12 +65,11 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      return false;
     }
   }
 
   // Login method
-  Future<bool> userLogin({
+  Future<void> userLogin({
     required String email,
     required String password,
   }) async {
@@ -75,7 +87,6 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      return true;
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'wrong-password') {
@@ -94,7 +105,6 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      return false;
     } catch (e) {
       Fluttertoast.showToast(
         msg: "An unexpected error occurred: $e",
@@ -104,7 +114,6 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      return false;
     }
   }
 }

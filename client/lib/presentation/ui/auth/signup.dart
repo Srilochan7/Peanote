@@ -1,15 +1,14 @@
-import 'dart:math';
-
 import 'package:counter_x/blocs/AuthBloc/auth_bloc.dart';
-import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
+import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/services/firebase_auth/Auth_services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:sizer/sizer.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -28,15 +27,31 @@ class _SignUpState extends State<SignUp> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if(state is AuthLoading){
-          showDialog(context: context, builder: (_)=>CircularProgressIndicator());
+        if (state is AuthLoading) {
+          // Show loading state
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => Center(child: CircularProgressIndicator()),
+          );
         }
-        else if(state is AuthSuccess){
-          Navigator.pop(context);
-          Navigator.push(context, MaterialPageRoute(builder: (context)=>MainScreen()));
+        if (state is AuthSuccess) {
+          // Navigate to main screen on successful signup
+          Navigator.pushAndRemoveUntil(
+            context,
+            PageTransition(
+              type: PageTransitionType.rightToLeft,
+              child: MainScreen(),
+            ),
+            (route) => false,
+          );
         }
-        else if(state is AuthFailure){
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Center(child: Text("${e.toString()}"),)));
+        if (state is AuthFailure) {
+          // Show error message
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
         }
       },
       child: Sizer(
@@ -93,9 +108,18 @@ class _SignUpState extends State<SignUp> {
                           ),
                         ),
                         SizedBox(height: 6.h),
+                        // Sign Up Button
                         ElevatedButton(
-                          onPressed: () async {
-                            context.read<AuthBloc>.read(SignUpRequested(email : _emailController, password : _passwordController))
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              // Dispatch the SignUpRequested event
+                               BlocProvider.of<AuthBloc>(context).add(
+                                SignUpRequested(
+                                  _emailController.text,
+                                  _passwordController.text,
+                                ),
+                              );
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple,
@@ -127,9 +151,11 @@ class _SignUpState extends State<SignUp> {
                             TextButton(
                               onPressed: () {
                                 Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => Login()));
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Login(),
+                                  ),
+                                );
                               },
                               child: Text(
                                 "Login",
@@ -197,6 +223,7 @@ class _SignUpState extends State<SignUp> {
                           ? Icons.visibility_off
                           : Icons.visibility,
                       color: Colors.deepPurple,
+
                     ),
                     onPressed: () {
                       setState(() {
