@@ -113,7 +113,7 @@ class _SignUpState extends State<SignUp> {
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               // Dispatch the SignUpRequested event
-                               BlocProvider.of<AuthBloc>(context).add(
+                             BlocProvider.of<AuthBloc>(context).add(
                                 SignUpRequested(
                                   _emailController.text,
                                   _passwordController.text,

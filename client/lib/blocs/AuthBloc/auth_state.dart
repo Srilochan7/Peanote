@@ -1,26 +1,30 @@
 part of 'auth_bloc.dart';
 
-sealed class AuthState {
+abstract class AuthState extends Equatable {
   const AuthState();
   
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-final class AuthInitial extends AuthState {}
+class AuthInitial extends AuthState {}
 
-// In your AuthBloc, AuthSuccess should accept a `User?` object.
+class AuthLoading extends AuthState {}
+
 class AuthSuccess extends AuthState {
   final User? user;
-  AuthSuccess(this.user);
+
+  const AuthSuccess(this.user);
+
+  @override
+  List<Object?> get props => [user];
 }
 
-
-final class AuthFailure extends AuthState{
+class AuthFailure extends AuthState {
   final String message;
 
-  AuthFailure(this.message);
-  
-}
+  const AuthFailure(this.message);
 
-final class AuthLoading extends AuthState{}
+  @override
+  List<Object> get props => [message];
+}

@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
 
-
 part 'auth_event.dart';
 part 'auth_state.dart';
 
@@ -27,11 +26,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       // Call the userLogin method from AuthService
-      await _authService.userLogin(email: event.email, password: event.password);
+      final user = await _authService.userLogin(email: event.email, password: event.password);
 
       // If login is successful, emit the AuthSuccess state with the current user
-      User? user = FirebaseAuth.instance.currentUser;
       emit(AuthSuccess(user));
+    } on FirebaseAuthException catch (e) {
+      emit(AuthFailure(e.message ?? "Login failed")); // Emit failure with Firebase error message
     } catch (e) {
       emit(AuthFailure(e.toString())); // Emit failure state if login fails
     }
@@ -43,11 +43,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       // Call the userSignUp method from AuthService
-      await _authService.userSignUp(email: event.email, password: event.password);
+      final user = await _authService.userSignUp(email: event.email, password: event.password);
 
       // If signup is successful, emit the AuthSuccess state with the current user
-      User? user = FirebaseAuth.instance.currentUser;
       emit(AuthSuccess(user));
+    } on FirebaseAuthException catch (e) {
+      // Handle specific Firebase Auth errors
+      emit(AuthFailure(e.message ?? "Sign up failed")); // Emit failure with Firebase error message
     } catch (e) {
       emit(AuthFailure(e.toString())); // Emit failure state if signup fails
     }

@@ -4,28 +4,13 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
 
 class AuthService {
-  // Sign up method with email check
-  Future<void> userSignUp({
+  // Sign up method
+  Future<User?> userSignUp({
     required String email,
     required String password,
   }) async {
     try {
-      // Check if email is already in use
-      final signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
-      if (signInMethods.isNotEmpty) {
-        Fluttertoast.showToast(
-          msg: "The email is already in use.",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.SNACKBAR,
-          backgroundColor: Colors.black54,
-          textColor: Colors.white,
-          fontSize: 14.sp,
-        );
-        return; // Return early if email is already in use
-      }
-
-      // Proceed to sign up
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -38,6 +23,8 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
+      
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'weak-password') {
@@ -56,6 +43,12 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
+      
+      // Rethrow the exception so the bloc can handle it
+      throw FirebaseAuthException(
+        code: e.code,
+        message: message,
+      );
     } catch (e) {
       Fluttertoast.showToast(
         msg: "An unexpected error occurred: $e",
@@ -65,16 +58,19 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
+     
+      // Rethrow the exception
+      throw Exception("An unexpected error occurred: $e");
     }
   }
 
   // Login method
-  Future<void> userLogin({
+  Future<User?> userLogin({
     required String email,
     required String password,
   }) async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -87,6 +83,8 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
+      
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'wrong-password') {
@@ -105,6 +103,12 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
+     
+      // Rethrow the exception
+      throw FirebaseAuthException(
+        code: e.code,
+        message: message,
+      );
     } catch (e) {
       Fluttertoast.showToast(
         msg: "An unexpected error occurred: $e",
@@ -114,6 +118,9 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
+      
+      // Rethrow the exception
+      throw Exception("An unexpected error occurred: $e");
     }
   }
 }
