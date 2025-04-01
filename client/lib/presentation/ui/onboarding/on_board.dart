@@ -1,3 +1,4 @@
+import 'package:counter_x/main.dart';
 import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
 import 'package:counter_x/presentation/ui/auth/signup.dart';

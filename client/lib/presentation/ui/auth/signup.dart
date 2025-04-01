@@ -22,43 +22,30 @@ class _SignUpState extends State<SignUp> {
   bool _obscurePassword = true;
 
   @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-  listener: (context, state) {
-    if (state is AuthLoading) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => Center(child: CircularProgressIndicator()),
-      );
-    } else if (state is AuthFailure) {
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(state.message)));
-    } else if (state is AuthSuccess) {
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      Navigator.pushReplacement(
-        context,
-        PageTransition(
-          type: PageTransitionType.fade,
-          child: MainScreen(),
-          duration: Duration(milliseconds: 500),
-        ),
-      );
-    }
-  },
-
+      listener: (context, state) {
+        if(state is AuthFailure){
+          // showDialog(context: context, builder: (_)=> Center(child: CircularProgressIndicator(),));
+        }
+        else if(state is AuthSuccess){
+          Navigator.pop(context);
+          Navigator.pushAndRemoveUntil(
+            context,
+            PageTransition(
+              type: PageTransitionType.fade, // Fade transition
+              child: MainScreen(),
+              duration: Duration(milliseconds: 500), // Optional: Adjust duration as needed
+            ),
+            (route) => false,
+          );
+        }
+        else if(state is AuthFailure){
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Center(child: Text(state.message),))
+          );
+        }
+      },
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return Scaffold(
@@ -73,8 +60,6 @@ class _SignUpState extends State<SignUp> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: 3.h),
-
-                        // Title
                         Text(
                           "Create Account",
                           style: GoogleFonts.lexend(
@@ -83,10 +68,7 @@ class _SignUpState extends State<SignUp> {
                             color: Colors.black87,
                           ),
                         ),
-
                         SizedBox(height: 1.h),
-
-                        // Subtitle
                         Text(
                           "Sign up to get started with your AI study assistant",
                           style: GoogleFonts.lexend(
@@ -94,10 +76,7 @@ class _SignUpState extends State<SignUp> {
                             color: Colors.grey.shade600,
                           ),
                         ),
-                        SizedBox(
-                          height: 2.h,
-                        ),
-
+                        SizedBox(height: 2.h),
                         Center(
                           child: Lottie.asset(
                             'assets/animation.json',
@@ -106,129 +85,13 @@ class _SignUpState extends State<SignUp> {
                             fit: BoxFit.contain,
                           ),
                         ),
-
                         SizedBox(height: 2.h),
-
-                        // Email Field
-                        Text(
-                          "Email",
-                          style: GoogleFonts.lexend(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-
-                        SizedBox(height: 1.h),
-
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            hintText: "Enter your email",
-                            hintStyle: GoogleFonts.lexend(
-                              fontSize: 15.sp,
-                              color: Colors.grey.shade400,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                  color: Colors.deepPurple, width: 2),
-                            ),
-                            prefixIcon: Icon(Icons.email_outlined,
-                                color: Colors.deepPurple),
-                            contentPadding: EdgeInsets.symmetric(vertical: 2.h),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            } else if (!RegExp(
-                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                .hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-
+                        _buildTextField("Email", "Enter your email",
+                            _emailController, false, Icons.email_outlined),
                         SizedBox(height: 3.h),
-
-                        // Password Field
-                        Text(
-                          "Password",
-                          style: GoogleFonts.lexend(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-
+                        _buildTextField("Password", "Create a password",
+                            _passwordController, true, Icons.lock_outline),
                         SizedBox(height: 1.h),
-
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            hintText: "Create a password",
-                            hintStyle: GoogleFonts.lexend(
-                              fontSize: 15.sp,
-                              color: Colors.grey.shade400,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                  color: Colors.deepPurple, width: 2),
-                            ),
-                            prefixIcon: Icon(Icons.lock_outline,
-                                color: Colors.deepPurple),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: Colors.deepPurple,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 2.h),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a password';
-                            } else if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        SizedBox(height: 1.h),
-
-                        // Password hint
                         Text(
                           "Password must be at least 6 characters",
                           style: GoogleFonts.lexend(
@@ -236,14 +99,18 @@ class _SignUpState extends State<SignUp> {
                             color: Colors.grey.shade500,
                           ),
                         ),
-
                         SizedBox(height: 6.h),
-
-                        // Sign Up Button
                         ElevatedButton(
-                          onPressed: () async {
-                            if(_formKey.currentState!.validate()){
-                              context.read<AuthBloc>().add(SignUpRequested(_emailController.text.trim(), _passwordController.text.trim()));
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              Navigator.pushReplacement(
+                                context,
+                                PageTransition(
+                                  type: PageTransitionType.fade,
+                                  child: MainScreen(),
+                                  duration: const Duration(milliseconds: 500),
+                                ),
+                              );
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -262,10 +129,7 @@ class _SignUpState extends State<SignUp> {
                             ),
                           ),
                         ),
-
                         SizedBox(height: 2.h),
-
-                        // Login redirect
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -278,7 +142,6 @@ class _SignUpState extends State<SignUp> {
                             ),
                             TextButton(
                               onPressed: () {
-                                Navigator.pop(context);
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -295,7 +158,6 @@ class _SignUpState extends State<SignUp> {
                             ),
                           ],
                         ),
-
                         SizedBox(height: 2.h),
                       ],
                     ),
@@ -306,6 +168,72 @@ class _SignUpState extends State<SignUp> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildTextField(String label, String hint,
+      TextEditingController controller, bool isPassword, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.lexend(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        SizedBox(height: 1.h),
+        TextFormField(
+          controller: controller,
+          keyboardType: isPassword
+              ? TextInputType.visiblePassword
+              : TextInputType.emailAddress,
+          obscureText: isPassword ? _obscurePassword : false,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.lexend(
+                fontSize: 15.sp, color: Colors.grey.shade400),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+            ),
+            prefixIcon: Icon(icon, color: Colors.deepPurple),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.deepPurple,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  )
+                : null,
+            contentPadding: EdgeInsets.symmetric(vertical: 2.h),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your $label';
+            }
+            if (isPassword && value.length < 6) {
+              return 'Password must be at least 6 characters';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 }

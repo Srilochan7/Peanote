@@ -37,24 +37,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onSignUpRequested(SignUpRequested event, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
-    try {
-      UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
-      );
-      emit(AuthSuccess(userCredential.user));
-    } on FirebaseAuthException catch (e) {
-      log("Error: ${e.toString()}");
-      if (e.code == 'email-already-in-use') {
-        emit(AuthFailure("This email is already in use"));
-      } else if (e.code == 'weak-password') {
-        emit(AuthFailure("Password should be at least 6 characters"));
-      } else {
-        emit(AuthFailure("SignUp error: ${e.message}"));
-      }
-    }
+  try {
+    emit(AuthLoading()); // Keep this if UI needs to show a loading state
+    UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+      email: event.email,
+      password: event.password,
+    );
+    emit(AuthSuccess(userCredential.user));
+  } on FirebaseAuthException catch (e) {
+    log("Error: ${e.toString()}");
+    emit(AuthFailure(e.toString()));
   }
+}
+
 
   Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
     try {
