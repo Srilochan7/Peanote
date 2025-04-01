@@ -17,3 +17,9 @@ prompt = (
     "3. **Check Readability** – If the notes are too messy or unclear, respond with: *'Your notes are unclear—please refine and try again.'*\n\n"
     "Be **quick, smart, and effective**—my exam depends on this!"
     )
+
+
+
+
+
+    lt --port 5000

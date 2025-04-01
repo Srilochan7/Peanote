@@ -61,28 +61,37 @@ def call_gemini_api(text):
     # Predefined prompt for legal document analysis
     prompt = (
     "Analyze the given content and provide structured outputs:\n\n"
-
-    "1. **Separate Summaries** for each distinct question or point:\n"
+    
+    "### 1. Separate Summaries (for each distinct question or point):\n"
     "- Write one paragraph per question (5-10 sentences, max 100 words).\n"
-    "- Begin each summary with:\n"
-    "  - **Summary #1:**\n"
-    "  - **Summary #2:**\n"
-    "- Leave a **blank line** between each summary for clarity.\n"
+    "- Format each summary as follows:\n\n"
+    
+    "**Summary #1:**\n"
+    "[Text]\n\n"
+    
+    "---\n\n"
+    
+    "**Summary #2:**\n"
+    "[Text]\n\n"
+    
+    "---\n\n"
+    
+    "- Ensure a **clear separation** between summaries using `---`.\n"
     "- If a question is unclear, state: **'Unclear Question #X'**.\n\n"
-
-    "2. **Key Terms & Definitions**:\n"
-    "- List key terms with simple one-sentence definitions.\n"
-    "- Format each term like this:\n"
-    "  - **Term:** Definition.\n"
-    "- Leave a **blank line** between each definition.\n\n"
-
+    
+    "### 2. Key Terms & Definitions:\n"
+    "- Provide key terms with **one-sentence definitions**.\n"
+    "- Format each term like this:\n\n"
+    
+    "**• Term:** Definition.\n\n"
+    
+    "---\n\n"
+    
     "**Rules:**\n"
-    "- **Do not combine multiple questions into one summary.**\n"
-    "- **No introductions or conclusions.**\n"
-    "- **Ensure there is always a blank line between summaries and definitions.**"
+    "- **Never combine** multiple questions into one summary.\n"
+    "- **No introductions or conclusions**.\n"
+    "- **Use markdown-style formatting for clarity**."
 )
-
-
 
 
 

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:counter_x/presentation/widgets/file_picker.dart';
-import 'package:counter_x/presentation/ui/response_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -17,10 +16,14 @@ class Summarizer extends StatefulWidget {
 class _SummarizerState extends State<Summarizer> {
   String? selectedFilePath;
   bool isLoading = false;
+  String? analysisText;
+  Map<String, dynamic>? responseData;
 
   Future<void> sendFileToServer(String filePath) async {
     setState(() {
       isLoading = true;
+      analysisText = null;
+      responseData = null;
     });
 
     try {
@@ -37,7 +40,7 @@ class _SummarizerState extends State<Summarizer> {
         },
       );
 
-      var uri = Uri.parse("http://10.0.2.2:5000/upload");
+      var uri = Uri.parse("https://loose-dryers-shop.loca.lt/upload");
       var request = http.MultipartRequest('POST', uri);
 
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
@@ -50,22 +53,18 @@ class _SummarizerState extends State<Summarizer> {
         Navigator.pop(context);
       }
       
-      setState(() {
-        isLoading = false;
-      });
-
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
         print("API Response Status Code: ${response.statusCode}");
         print("API Response Content Type: ${response.headers['content-type']}");
         
         // Extract the text from the Gemini API response structure
-        String analysisText = "No content available";
+        String extractedText = "No content available";
         
         try {
           // Check if error key exists in the response
           if (jsonResponse.containsKey('error')) {
-            analysisText = "Error: ${jsonResponse['error']}";
+            extractedText = "Error: ${jsonResponse['error']}";
           }
           // Navigate through the Gemini API response structure
           else if (jsonResponse.containsKey('candidates') && 
@@ -78,31 +77,27 @@ class _SummarizerState extends State<Summarizer> {
                 candidate['content']['parts'] is List && 
                 candidate['content']['parts'].isNotEmpty) {
               
-              analysisText = candidate['content']['parts'][0]['text'];
+              extractedText = candidate['content']['parts'][0]['text'];
             }
           }
           // Handle alternative response format if necessary
           else {
             print("Response Structure: ${jsonResponse.keys.toList()}");
             // Try to find text content in the response structure
-            analysisText = _findTextInResponse(jsonResponse) ?? "Could not extract text from response.";
+            extractedText = _findTextInResponse(jsonResponse) ?? "Could not extract text from response.";
           }
         } catch (e) {
           print("Error extracting text from response: $e");
-          analysisText = "Error parsing response: $e";
+          extractedText = "Error parsing response: $e";
         }
         
-        print("Extracted Text Preview: ${analysisText.substring(0, analysisText.length > 100 ? 100 : analysisText.length)}...");
+        print("Extracted Text Preview: ${extractedText.substring(0, extractedText.length > 100 ? 100 : extractedText.length)}...");
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResponsePage(
-              responseText: analysisText, 
-              responseData: jsonResponse
-            ),
-          ),
-        );
+        setState(() {
+          analysisText = extractedText;
+          responseData = jsonResponse;
+          isLoading = false;
+        });
       } else {
         // Handle error
         ScaffoldMessenger.of(context).showSnackBar(
@@ -112,6 +107,9 @@ class _SummarizerState extends State<Summarizer> {
           )
         );
         print("Error response body: ${response.body}");
+        setState(() {
+          isLoading = false;
+        });
       }
     } catch (e) {
       // Remove loading dialog if it's still showing
@@ -119,10 +117,6 @@ class _SummarizerState extends State<Summarizer> {
         Navigator.pop(context);
       }
       
-      setState(() {
-        isLoading = false;
-      });
-
       // Handle network or parsing errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -131,6 +125,10 @@ class _SummarizerState extends State<Summarizer> {
         )
       );
       print("Exception during file upload: $e");
+      
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -330,6 +328,75 @@ class _SummarizerState extends State<Summarizer> {
                             ),
                       ),
                     ),
+                    
+                    // Response section - only visible when analysis is completed
+                    if (analysisText != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 3.h),
+                          Text(
+                            "Summary Results",
+                            style: GoogleFonts.lexend(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          SizedBox(height: 1.h),
+                          Container(
+                            width: 90.w,
+                            padding: EdgeInsets.all(3.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.shade200,
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  analysisText!,
+                                  style: GoogleFonts.lexend(
+                                    fontSize: 14.sp,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        // Add logic to download or share the summary
+                                      },
+                                      icon: const Icon(Icons.download, color: Colors.white),
+                                      label: Text(
+                                        "Download",
+                                        style: GoogleFonts.lexend(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.deepPurple,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
