@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:counter_x/blocs/AuthBloc/auth_bloc.dart';
 import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
+import 'package:counter_x/services/firebase_auth/Auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,25 +28,15 @@ class _SignUpState extends State<SignUp> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if(state is AuthFailure){
-          // showDialog(context: context, builder: (_)=> Center(child: CircularProgressIndicator(),));
+        if(state is AuthLoading){
+          showDialog(context: context, builder: (_)=>CircularProgressIndicator());
         }
         else if(state is AuthSuccess){
           Navigator.pop(context);
-          Navigator.pushAndRemoveUntil(
-            context,
-            PageTransition(
-              type: PageTransitionType.fade, // Fade transition
-              child: MainScreen(),
-              duration: Duration(milliseconds: 500), // Optional: Adjust duration as needed
-            ),
-            (route) => false,
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (context)=>MainScreen()));
         }
         else if(state is AuthFailure){
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Center(child: Text(state.message),))
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Center(child: Text("${e.toString()}"),)));
         }
       },
       child: Sizer(
@@ -101,17 +94,8 @@ class _SignUpState extends State<SignUp> {
                         ),
                         SizedBox(height: 6.h),
                         ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              Navigator.pushReplacement(
-                                context,
-                                PageTransition(
-                                  type: PageTransitionType.fade,
-                                  child: MainScreen(),
-                                  duration: const Duration(milliseconds: 500),
-                                ),
-                              );
-                            }
+                          onPressed: () async {
+                            context.read<AuthBloc>.read(SignUpRequested(email : _emailController, password : _passwordController))
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple,
