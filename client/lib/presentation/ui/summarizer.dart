@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:counter_x/presentation/widgets/file_picker.dart';
+import 'package:counter_x/presentation/ui/response_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -16,40 +17,55 @@ class Summarizer extends StatefulWidget {
 class _SummarizerState extends State<Summarizer> {
   String? selectedFilePath;
   bool isLoading = false;
-  String? analysisText; // Added to store response text
-  bool hasAnalysis = false; // Track if we have a response to show
 
   Future<void> sendFileToServer(String filePath) async {
     setState(() {
       isLoading = true;
-      analysisText = null; // Reset analysis text when starting a new request
-      hasAnalysis = false;
     });
 
     try {
-      // Show loading indicator directly in the UI instead of a dialog
-      var uri =  await http.get(
-      Uri.parse("http://localhost:5000/upload"),
-    ).timeout(Duration(seconds: 15 )); 
-      var request = http.MultipartRequest('POST', uri as Uri);
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Colors.deepPurple,
+            ),
+          );
+        },
+      );
+
+      var uri = Uri.parse("http://10.0.2.2:5000/upload");
+      var request = http.MultipartRequest('POST', uri);
 
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
+
+      // Remove loading dialog
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
       
+      setState(() {
+        isLoading = false;
+      });
+
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
         print("API Response Status Code: ${response.statusCode}");
-        print("API Response Content Type: ${response.headers['content-type']}");    
+        print("API Response Content Type: ${response.headers['content-type']}");
         
         // Extract the text from the Gemini API response structure
-        String extractedText = "No content available";
+        String analysisText = "No content available";
         
         try {
           // Check if error key exists in the response
           if (jsonResponse.containsKey('error')) {
-            extractedText = "Error: ${jsonResponse['error']}";
+            analysisText = "Error: ${jsonResponse['error']}";
           }
           // Navigate through the Gemini API response structure
           else if (jsonResponse.containsKey('candidates') && 
@@ -62,28 +78,31 @@ class _SummarizerState extends State<Summarizer> {
                 candidate['content']['parts'] is List && 
                 candidate['content']['parts'].isNotEmpty) {
               
-              extractedText = candidate['content']['parts'][0]['text'];
+              analysisText = candidate['content']['parts'][0]['text'];
             }
           }
           // Handle alternative response format if necessary
           else {
             print("Response Structure: ${jsonResponse.keys.toList()}");
             // Try to find text content in the response structure
-            extractedText = _findTextInResponse(jsonResponse) ?? "Could not extract text from response.";
+            analysisText = _findTextInResponse(jsonResponse) ?? "Could not extract text from response.";
           }
         } catch (e) {
           print("Error extracting text from response: $e");
-          extractedText = "Error parsing response: $e";
+          analysisText = "Error parsing response: $e";
         }
         
-        print("Extracted Text Preview: ${extractedText.substring(0, extractedText.length > 100 ? 100 : extractedText.length)}...");
+        print("Extracted Text Preview: ${analysisText.substring(0, analysisText.length > 100 ? 100 : analysisText.length)}...");
 
-        // Update state with the analysis text
-        setState(() {
-          analysisText = extractedText;
-          isLoading = false;
-          hasAnalysis = true;
-        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResponsePage(
+              responseText: analysisText, 
+              responseData: jsonResponse
+            ),
+          ),
+        );
       } else {
         // Handle error
         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,13 +112,17 @@ class _SummarizerState extends State<Summarizer> {
           )
         );
         print("Error response body: ${response.body}");
-        setState(() {
-          isLoading = false;
-          analysisText = "Failed to get a response from the server (Status: ${response.statusCode})";
-          hasAnalysis = true;
-        });
       }
     } catch (e) {
+      // Remove loading dialog if it's still showing
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      
+      setState(() {
+        isLoading = false;
+      });
+
       // Handle network or parsing errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -108,11 +131,6 @@ class _SummarizerState extends State<Summarizer> {
         )
       );
       print("Exception during file upload: $e");
-      setState(() {
-        isLoading = false;
-        analysisText = "Error: $e";
-        hasAnalysis = true;
-      });
     }
   }
 
@@ -312,80 +330,6 @@ class _SummarizerState extends State<Summarizer> {
                             ),
                       ),
                     ),
-                    
-                    // Shows loading indicator or analysis results below the button
-                    SizedBox(height: 3.h),
-                    
-                    if (isLoading) 
-                      Center(
-                        child: Column(
-                          children: [
-                            CircularProgressIndicator(color: Colors.deepPurple),
-                            SizedBox(height: 1.h),
-                            Text(
-                              "Analyzing your document...",
-                              style: GoogleFonts.lexend(
-                                fontSize: 14.sp,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else if (hasAnalysis && analysisText != null) 
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(4.w),
-                        margin: EdgeInsets.only(bottom: 4.h),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.shade200,
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Analysis Results",
-                                  style: GoogleFonts.lexend(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.copy, color: Colors.deepPurple),
-                                  onPressed: () {
-                                    // Add copy functionality here
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Analysis copied to clipboard"))
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                            Divider(),
-                            SizedBox(height: 1.h),
-                            Text(
-                              analysisText!,
-                              style: GoogleFonts.lexend(
-                                fontSize: 14.sp,
-                                color: Colors.black87,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                   ],
                 ),
               ),

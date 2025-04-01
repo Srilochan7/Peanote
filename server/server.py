@@ -26,7 +26,7 @@ GEMINI_API_KEYS = os.getenv("GEMINI_API_KEYS", "").split(",")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
 
 # Root route for testing
-@app.route("/", methods=["POST", "GET"])
+@app.route("/", methods=["GET"])
 def home():
     return "Flask server is running!", 200
 
@@ -58,16 +58,34 @@ def extract_text(pdf_path):
 def call_gemini_api(text):
     """Call the Gemini API with extracted text and a predefined prompt."""
     
-    print(f"Gemini API Response Structure: {json.dumps(gemini_response, indent=2)[:500]})...")
-    
     # Predefined prompt for legal document analysis
     prompt = (
-    f"You are my ultimate last-minute study buddy! I'll share my notes, and your job is to:\n\n"
-    "1. **Summarize** – Provide a **clear and concise** version of the key takeaways. **No fluff, just the essentials.**\n"
-    "2. **Explain Terms** – Break down any complex words or concepts **in the simplest way possible**, as if explaining to a 10-year-old.\n"
-    "3. **Check Readability** – If the notes are too messy or unclear, respond with: *'Your notes are unclear—please refine and try again.'*\n\n"
-    "Be **quick, smart, and effective**—my exam depends on this!"
-    )
+    "Analyze the given content and provide structured outputs:\n\n"
+
+    "1. **Separate Summaries** for each distinct question or point:\n"
+    "- Write one paragraph per question (5-10 sentences, max 100 words).\n"
+    "- Begin each summary with:\n"
+    "  - **Summary #1:**\n"
+    "  - **Summary #2:**\n"
+    "- Leave a **blank line** between each summary for clarity.\n"
+    "- If a question is unclear, state: **'Unclear Question #X'**.\n\n"
+
+    "2. **Key Terms & Definitions**:\n"
+    "- List key terms with simple one-sentence definitions.\n"
+    "- Format each term like this:\n"
+    "  - **Term:** Definition.\n"
+    "- Leave a **blank line** between each definition.\n\n"
+
+    "**Rules:**\n"
+    "- **Do not combine multiple questions into one summary.**\n"
+    "- **No introductions or conclusions.**\n"
+    "- **Ensure there is always a blank line between summaries and definitions.**"
+)
+
+
+
+
+
 
     # API request body (Correct Format)
     data = {
