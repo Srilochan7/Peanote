@@ -26,7 +26,7 @@ GEMINI_API_KEYS = os.getenv("GEMINI_API_KEYS", "").split(",")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
 
 # Root route for testing
-@app.route("/", methods=["GET"])
+@app.route("/", methods=["POST", "GET"])
 def home():
     return "Flask server is running!", 200
 
@@ -57,6 +57,8 @@ def extract_text(pdf_path):
 
 def call_gemini_api(text):
     """Call the Gemini API with extracted text and a predefined prompt."""
+    
+    print(f"Gemini API Response Structure: {json.dumps(gemini_response, indent=2)[:500]})...")
     
     # Predefined prompt for legal document analysis
     prompt = (

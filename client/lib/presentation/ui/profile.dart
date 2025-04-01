@@ -1,5 +1,8 @@
+import 'package:counter_x/blocs/AuthBloc/auth_bloc.dart';
 import 'package:counter_x/models/note_model.dart';
+import 'package:counter_x/presentation/ui/auth/login.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 
@@ -20,21 +23,23 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Sizer(
-      builder: (context, orientation, deviceType) {
-        return Scaffold(
-          backgroundColor: const Color.fromARGB(255, 232, 230, 244),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   SizedBox(height: 1.h,),
+        builder: (context, orientation, deviceType) {
+          return Scaffold(
+            backgroundColor: const Color.fromARGB(255, 232, 230, 244),
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 1.h,
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Container(
-                           width: 10.w,
+                          width: 10.w,
                           height: 5.h,
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -48,7 +53,8 @@ class _ProfileState extends State<Profile> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 18),
+                            icon: const Icon(Icons.arrow_back,
+                                color: Colors.black, size: 18),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
@@ -63,73 +69,71 @@ class _ProfileState extends State<Profile> {
                         ),
                       ],
                     ),
-                  
-                  const SizedBox(height: 20),
 
-                  // Profile Header
-                  Center(
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-  radius: 60,
-  backgroundColor: Colors.white54,
-  backgroundImage: NetworkImage(
-    "https://i.pravatar.cc/150?img=${DateTime.now().millisecondsSinceEpoch % 70}" // Random user image
-  ),
-  
-),
+                    const SizedBox(height: 20),
 
-                        const SizedBox(height: 15),
-                        Text(
-                          userName,
-                          style: GoogleFonts.lexend(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          userEmail,
-                          style: GoogleFonts.lexend(
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Profile Statistics
-                  Card(
-                    color: Colors.white54,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    // Profile Header
+                    Center(
+                      child: Column(
                         children: [
-                          _buildStatColumn('Total Notes', totalNotes),
-                          _buildStatColumn('Categorized', categorizedNotes),
-                          _buildStatColumn('Summaries', 5),
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundColor: Colors.white54,
+                            backgroundImage: NetworkImage(
+                                "https://i.pravatar.cc/150?img=${DateTime.now().millisecondsSinceEpoch % 70}" // Random user image
+                                ),
+                          ),
+                          const SizedBox(height: 15),
+                          Text(
+                            userName,
+                            style: GoogleFonts.lexend(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            userEmail,
+                            style: GoogleFonts.lexend(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 30),
+                    const SizedBox(height: 30),
 
-                  // Profile Settings
-                  _buildSettingsSection(),
-                ],
+                    // Profile Statistics
+                    Card(
+                      color: Colors.white54,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatColumn('Total Notes', totalNotes),
+                            _buildStatColumn('Categorized', categorizedNotes),
+                            _buildStatColumn('Summaries', 5),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Profile Settings
+                    _buildSettingsSection(),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
     );
   }
 
@@ -193,7 +197,36 @@ class _ProfileState extends State<Profile> {
             icon: Icons.logout,
             title: 'Logout',
             onTap: () {
-              // TODO: Implement logout functionality
+              
+
+
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "You have been successfully logged out",
+            style: GoogleFonts.poppins(),
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // ✅ Navigate to Login Page (Update the route accordingly)
+      Future.delayed(Duration(milliseconds: 500), () {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Login()), (route) => false);
+      });
+
+
+
+
+
+
+
+
+
+
+
+
             },
           ),
         ],
