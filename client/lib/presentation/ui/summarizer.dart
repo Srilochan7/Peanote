@@ -1,6 +1,10 @@
 import 'dart:convert';
 
+import 'package:counter_x/main_screen.dart';
+import 'package:counter_x/models/note_model.dart';
+import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:counter_x/presentation/widgets/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -339,72 +343,120 @@ class _SummarizerState extends State<Summarizer> {
                       ),
                     
                     // Results section
-                    if (showResults && analysisText != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Summary Results",
-                            style: GoogleFonts.lexend(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(height: 1.h),
-                          Container(
-                            width: 90.w,
-                            padding: EdgeInsets.all(3.w),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.shade200,
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  analysisText!,
-                                  style: GoogleFonts.lexend(
-                                    fontSize: 14.sp,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                SizedBox(height: 2.h),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        // Download logic
-                                      },
-                                      icon: const Icon(Icons.download, color: Colors.white),
-                                      label: Text(
-                                        "Download",
-                                        style: GoogleFonts.lexend(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.deepPurple,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    // Results section
+if (showResults && analysisText != null)
+  Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "Summary Results",
+        style: GoogleFonts.lexend(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
+        ),
+      ),
+      SizedBox(height: 1.h),
+      Container(
+        width: 90.w,
+        padding: EdgeInsets.all(3.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepPurple.withOpacity(0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(2.w),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                analysisText!,
+                style: GoogleFonts.lexend(
+                  fontSize: 14.sp,
+                  color: Colors.black87,
+                  height: 1.5,
+                ),
+              ),
+            ),
+            SizedBox(height: 2.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+  onPressed: () async {
+  if (analysisText != null && analysisText.toString().length >= 2) {
+    selectedFilePath = selectedFilePath.toString().split('/').last;
+    final newNote = Note(
+      id: notes.length,
+      title: selectedFilePath.toString(),
+      content: analysisText.toString(),
+      modifiedTime: DateTime.now(),
+      category: NoteCategory.analyzedNotes,
+    );
+
+    // Navigate to Notepad and wait for edited note data
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Notepad(note: newNote),
+      ),
+    );
+    Navigator.push(context, MaterialPageRoute(builder: (context)=>MainScreen()));
+
+    if (result != null && result is List) {
+      setState(() {
+        notes.add(Note(
+          id: notes.length,
+          title: result[0],
+          content: result[1],
+          modifiedTime: DateTime.now(),
+          category: result[2],
+        ));
+      });
+    }
+  }
+},
+
+  icon: const Icon(Icons.save, color: Colors.white, size: 20),
+  label: Text(
+    "Save Summary",
+    style: GoogleFonts.lexend(
+      color: Colors.white,
+      fontWeight: FontWeight.w500,
+      fontSize: 14.sp,
+    ),
+  ),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.deepPurple,
+    foregroundColor: Colors.white,
+    padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    elevation: 3,
+  ),
+),
+              ],
+            ),
+          ],
+        ),
+      ),
+      
+    ],
+  ),
+                    
                     
                     SizedBox(height: 3.h),
                   ],

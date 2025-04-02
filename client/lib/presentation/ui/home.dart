@@ -399,7 +399,7 @@ class _HomeState extends State<Home> {
     switch (category) {
       case NoteCategory.lectureNotes:
         return Icons.person;
-      case NoteCategory.research:
+      case NoteCategory.analyzedNotes:
         return Icons.work;
       case NoteCategory.examPrep:
         return Icons.lightbulb;

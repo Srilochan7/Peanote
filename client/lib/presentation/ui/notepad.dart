@@ -211,7 +211,7 @@ class _NotepadState extends State<Notepad> {
     switch (category) {
       case NoteCategory.lectureNotes:
         return Icons.person;
-      case NoteCategory.research:
+      case NoteCategory.analyzedNotes:
         return Icons.work;
       case NoteCategory.examPrep:
         return Icons.lightbulb;

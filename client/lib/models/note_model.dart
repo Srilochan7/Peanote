@@ -6,8 +6,10 @@ class Note {
   String content;
   DateTime modifiedTime;
   NoteCategory category;
+  String? analysisText; // Include it as a field
 
   Note({
+    this.analysisText,
     required this.id,
     required this.title,
     required this.content,
@@ -16,9 +18,10 @@ class Note {
   });
 }
 
+
 enum NoteCategory {
   lectureNotes,   // AI-generated summaries & highlights from classes  
-  research,       // AI-assisted deep research notes & paper explanations  
+  analyzedNotes,       // AI-assisted deep research notes & paper explanations  
   examPrep,       // AI-generated revision guides, flashcards, and key points  
   assignments,    // Homework, AI-explained solutions & project documentation  
   miscellaneous   // General notes that don’t fit other categories  
@@ -31,8 +34,8 @@ extension NoteCategoryExtension on NoteCategory {
     switch (this) {
       case NoteCategory.lectureNotes:
         return 'Lectures';
-      case NoteCategory.research:
-        return 'Research';
+      case NoteCategory.analyzedNotes:
+        return 'Analysed notes';
       case NoteCategory.examPrep:
         return 'Exam Prep';
       case NoteCategory.assignments:
@@ -46,7 +49,7 @@ extension NoteCategoryExtension on NoteCategory {
     switch (this) {
       case NoteCategory.lectureNotes:
         return const Color(0xFFF3E5F5); // Light Purple
-      case NoteCategory.research:
+      case NoteCategory.analyzedNotes:
         return const Color(0xFFE3F2FD); // Light Blue
       case NoteCategory.examPrep:
         return const Color(0xFFFFF3E0); // Light Orange
@@ -61,7 +64,7 @@ extension NoteCategoryExtension on NoteCategory {
     switch (this) {
       case NoteCategory.lectureNotes:
         return const Color(0xFF9C27B0); // Deep Purple
-      case NoteCategory.research:
+      case NoteCategory.analyzedNotes:
         return const Color(0xFF2196F3); // Blue
       case NoteCategory.examPrep:
         return const Color(0xFFFF9800); // Orange
@@ -121,7 +124,7 @@ final List<Note> notes = [
     title: 'Advanced ML',
     content: 'A deep dive into complex machine learning algorithms and their applications.',
     modifiedTime: DateTime(2024, 6, 10),
-    category: NoteCategory.research,
+    category: NoteCategory.analyzedNotes,
   ),
   Note(
     id: 8,
