@@ -12,6 +12,8 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
+
 # Add CORS support
 @app.after_request
 def after_request(response):

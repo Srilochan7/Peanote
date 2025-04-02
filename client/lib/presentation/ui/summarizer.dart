@@ -18,55 +18,37 @@ class _SummarizerState extends State<Summarizer> {
   bool isLoading = false;
   String? analysisText;
   Map<String, dynamic>? responseData;
+  bool showResults = false;
 
   Future<void> sendFileToServer(String filePath) async {
     setState(() {
       isLoading = true;
       analysisText = null;
       responseData = null;
+      showResults = false;
     });
 
     try {
-      // Show loading dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Colors.deepPurple,
-            ),
-          );
-        },
-      );
+      final uri = Uri.parse("http://192.168.0.161:5000/upload");
 
-      var uri = Uri.parse("https://loose-dryers-shop.loca.lt/upload");
       var request = http.MultipartRequest('POST', uri);
 
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
-
-      // Remove loading dialog
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
       
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
         print("API Response Status Code: ${response.statusCode}");
         print("API Response Content Type: ${response.headers['content-type']}");
         
-        // Extract the text from the Gemini API response structure
         String extractedText = "No content available";
         
         try {
-          // Check if error key exists in the response
           if (jsonResponse.containsKey('error')) {
             extractedText = "Error: ${jsonResponse['error']}";
           }
-          // Navigate through the Gemini API response structure
           else if (jsonResponse.containsKey('candidates') && 
               jsonResponse['candidates'] is List && 
               jsonResponse['candidates'].isNotEmpty) {
@@ -80,10 +62,8 @@ class _SummarizerState extends State<Summarizer> {
               extractedText = candidate['content']['parts'][0]['text'];
             }
           }
-          // Handle alternative response format if necessary
           else {
             print("Response Structure: ${jsonResponse.keys.toList()}");
-            // Try to find text content in the response structure
             extractedText = _findTextInResponse(jsonResponse) ?? "Could not extract text from response.";
           }
         } catch (e) {
@@ -97,9 +77,9 @@ class _SummarizerState extends State<Summarizer> {
           analysisText = extractedText;
           responseData = jsonResponse;
           isLoading = false;
+          showResults = true;
         });
       } else {
-        // Handle error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to upload file: ${response.statusCode}'),
@@ -109,15 +89,10 @@ class _SummarizerState extends State<Summarizer> {
         print("Error response body: ${response.body}");
         setState(() {
           isLoading = false;
+          showResults = false;
         });
       }
     } catch (e) {
-      // Remove loading dialog if it's still showing
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      
-      // Handle network or parsing errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -128,19 +103,17 @@ class _SummarizerState extends State<Summarizer> {
       
       setState(() {
         isLoading = false;
+        showResults = false;
       });
     }
   }
 
-  // Helper function to recursively find text in response
   String? _findTextInResponse(dynamic json) {
     if (json is Map) {
-      // Try common keys that might contain the response text
       if (json.containsKey('text')) return json['text'];
       if (json.containsKey('content')) return _findTextInResponse(json['content']);
       if (json.containsKey('message')) return json['message'];
       
-      // Recursively search through all keys
       for (var key in json.keys) {
         final result = _findTextInResponse(json[key]);
         if (result != null) return result;
@@ -151,7 +124,6 @@ class _SummarizerState extends State<Summarizer> {
         if (result != null) return result;
       }
     } else if (json is String && json.trim().isNotEmpty && json.length > 50) {
-      // If we find a substantial string, it might be our response
       return json;
     }
     return null;
@@ -170,7 +142,7 @@ class _SummarizerState extends State<Summarizer> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 5.h,),
+                    SizedBox(height: 5.h),
                     // Top Navigation Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -190,7 +162,7 @@ class _SummarizerState extends State<Summarizer> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 18,),
+                            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 18),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
@@ -239,6 +211,7 @@ class _SummarizerState extends State<Summarizer> {
                             if (filePath != null) {
                               setState(() {
                                 selectedFilePath = filePath;
+                                showResults = false; // Hide previous results when new file is selected
                               });
                               print("Selected file path: $filePath");
                             } else {
@@ -292,7 +265,7 @@ class _SummarizerState extends State<Summarizer> {
 
                     SizedBox(height: 3.h),
 
-                    // Analyze Button
+                    // Analyze Button with integrated loading indicator
                     Center(
                       child: ElevatedButton(
                         onPressed: (selectedFilePath != null && !isLoading)
@@ -310,13 +283,27 @@ class _SummarizerState extends State<Summarizer> {
                           elevation: 5,
                         ),
                         child: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                SizedBox(width: 2.w),
+                                Text(
+                                  "Analyzing...",
+                                  style: GoogleFonts.lexend(
+                                    fontSize: 16.sp,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             )
                           : Text(
                               "Analyze ✨",
@@ -329,12 +316,33 @@ class _SummarizerState extends State<Summarizer> {
                       ),
                     ),
                     
-                    // Response section - only visible when analysis is completed
-                    if (analysisText != null)
+                    SizedBox(height: 3.h),
+                    
+                    // Loading indicator for analysis in progress
+                    if (isLoading && !showResults)
+                      Center(
+                        child: Column(
+                          children: [
+                            CircularProgressIndicator(
+                              color: Colors.deepPurple,
+                            ),
+                            SizedBox(height: 1.h),
+                            Text(
+                              "Generating summary...",
+                              style: GoogleFonts.lexend(
+                                fontSize: 16.sp,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    // Results section
+                    if (showResults && analysisText != null)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 3.h),
                           Text(
                             "Summary Results",
                             style: GoogleFonts.lexend(
@@ -374,7 +382,7 @@ class _SummarizerState extends State<Summarizer> {
                                   children: [
                                     ElevatedButton.icon(
                                       onPressed: () {
-                                        // Add logic to download or share the summary
+                                        // Download logic
                                       },
                                       icon: const Icon(Icons.download, color: Colors.white),
                                       label: Text(
@@ -397,6 +405,8 @@ class _SummarizerState extends State<Summarizer> {
                           ),
                         ],
                       ),
+                    
+                    SizedBox(height: 3.h),
                   ],
                 ),
               ),
