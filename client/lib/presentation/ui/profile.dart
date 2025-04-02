@@ -18,7 +18,8 @@ class _ProfileState extends State<Profile> {
   String userName = "John Doe";
   String userEmail = "johndoe@example.com";
   int totalNotes = notes.length;
-  int categorizedNotes = 5;
+  int categorizedNotes = notes.length;
+  
 
   @override
   Widget build(BuildContext context) {

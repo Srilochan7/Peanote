@@ -4,7 +4,6 @@ import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/models/note_model.dart';
 import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:counter_x/presentation/widgets/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;

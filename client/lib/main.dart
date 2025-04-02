@@ -1,5 +1,7 @@
 import 'package:counter_x/blocs/AuthBloc/auth_bloc.dart';
+import 'package:counter_x/presentation/ui/auth/signup.dart';
 import 'package:counter_x/presentation/ui/onboarding/on_board.dart';
+import 'package:counter_x/presentation/ui/onboarding/splashscreen.dart';
 import 'package:counter_x/services/firebase_auth/Auth_services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +26,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: Onboard(),
+        home: Splashscreen(),
       ),
     );
   }
