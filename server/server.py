@@ -104,7 +104,8 @@ def call_gemini_api(text):
             {
                 "parts": [{"text": f"{prompt}\n\n{text}"}]
             }
-        ]
+        ],
+        "stream" : True
     }
 
     for i, api_key in enumerate(GEMINI_API_KEYS):

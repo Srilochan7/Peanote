@@ -20,11 +20,12 @@ class _HomeState extends State<Home> {
   List<Note> filteredNotes = [];
   bool sorted = false;
   NoteCategory? selectedCategory;
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   @override
   void initState() {
     super.initState();
-    filteredNotes = notes;
+    filteredNotes = List.from(notes);
   }
 
   List<Note> sortNotes(List<Note> notes) {
@@ -53,17 +54,32 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void deleteNote(int index) {
+  Future<void> deleteNote(int index) async {
+    final deletedNote = filteredNotes[index];
+    
     setState(() {
+      notes.removeWhere((note) => note.id == deletedNote.id);
       filteredNotes.removeAt(index);
     });
+
+    // Wait for the UI to update before rebuilding
+    await Future.delayed(Duration.zero);
+    
+    // Reapply filters if needed
+    if (selectedCategory != null) {
+      setState(() {
+        filteredNotes = notes.where((note) => note.category == selectedCategory).toList();
+      });
+    } else {
+      setState(() {
+        filteredNotes = List.from(notes);
+      });
+    }
   }
 
   void showEditDialog(BuildContext context, int index, Note note) {
-    // Placeholder function for editing logic
+    // Your existing edit dialog logic
   }
-   
-
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +106,7 @@ class _HomeState extends State<Home> {
                     IconButton(
                       onPressed: () {
                         setState(() {
-                          filteredNotes = sortNotes(filteredNotes);
+                          filteredNotes = sortNotes(List.from(filteredNotes));
                         });
                       },
                       icon: Container(
@@ -146,45 +162,44 @@ class _HomeState extends State<Home> {
                   child: Row(
                     children: NoteCategory.values.map((category) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: ChoiceChip(
-                        label: Text(
-                          category.label,
-                          style: GoogleFonts.lexend(
-                            fontSize: 15.sp,
-                            color: selectedCategory == category 
-                                ? Colors.white 
-                                : category.iconColor,
-                          ),
-                        ),
-                        selected: selectedCategory == category,
-                        onSelected: (_) {
-                          setState(() {
-                            if (selectedCategory == category) {
-                              selectedCategory = null;
-                              filteredNotes = notes;
-                            } else {
-                              filterByCategory(category);
-                            }
-                          });
-                        },
-                        selectedColor: category.iconColor,
-                        backgroundColor: category.color,
-                        avatar: selectedCategory == category
-                            ? null // Hide the icon when selected
-                            : Icon(
-                                _getCategoryIcon(category),
-                                color: category.iconColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: ChoiceChip(
+                            label: Text(
+                              category.label,
+                              style: GoogleFonts.lexend(
+                                fontSize: 15.sp,
+                                color: selectedCategory == category
+                                    ? Colors.white
+                                    : category.iconColor,
                               ),
-                      )
-
-                      );
+                            ),
+                            selected: selectedCategory == category,
+                            onSelected: (_) {
+                              setState(() {
+                                if (selectedCategory == category) {
+                                  selectedCategory = null;
+                                  filteredNotes = List.from(notes);
+                                } else {
+                                  filterByCategory(category);
+                                }
+                              });
+                            },
+                            selectedColor: category.iconColor,
+                            backgroundColor: category.color,
+                            avatar: selectedCategory == category
+                                ? null
+                                : Icon(
+                                    _getCategoryIcon(category),
+                                    color: category.iconColor,
+                                  ),
+                          ));
                     }).toList(),
                   ),
                 ),
                 SizedBox(height: 1.h),
                 Expanded(
                   child: ListView.builder(
+                    key: _listKey,
                     itemCount: filteredNotes.length,
                     itemBuilder: (context, index) {
                       final note = filteredNotes[index];
@@ -196,154 +211,120 @@ class _HomeState extends State<Home> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
+                          child: Dismissible(
+                            key: Key(note.id.toString()), // Unique key for each note
+                            direction: DismissDirection.startToEnd,
+                            confirmDismiss: (direction) async {
+                              if (direction == DismissDirection.startToEnd) {
+                                return await showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text("Confirmation"),
+                                      content: Text("Are you sure you want to delete this note?"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: Text("Delete"),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                              return false;
+                            },
+                            onDismissed: (direction) async {
+                              await deleteNote(index);
+                            },
+                            background: Container(
+                              alignment: Alignment.centerLeft,
+                              padding: EdgeInsets.only(left: 20),
                               decoration: BoxDecoration(
-                                color: note.category.iconColor.withOpacity(0.2),
+                                color: Colors.redAccent.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(
-                                _getCategoryIcon(note.category),
-                                color: note.category.iconColor,
-                              ),
+                              child: Icon(Icons.delete, color: Colors.redAccent, size: 32),
                             ),
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context, 
-                                MaterialPageRoute(
-                                  builder: (context) => Notepad(note: filteredNotes[index])
-                                )
-                              );
+                            child: ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: note.category.iconColor.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  _getCategoryIcon(note.category),
+                                  color: note.category.iconColor,
+                                ),
+                              ),
+                              onTap: () async {
+                                final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => Notepad(
+                                            note: filteredNotes[index])));
 
-                              if (result != null) {
-                                setState(() {
-                                  int oi = notes.indexOf(filteredNotes[index]);
-                                  
-                                  notes[oi] = Note(
-                                    id: notes[oi].id, 
-                                    title: result[0], 
-                                    content: result[1], 
-                                    modifiedTime: DateTime.now(),
-                                    category: result[2] ?? notes[oi].category
-                                  );
-                                  
-                                  // Reapply current filtering
-                                  if (selectedCategory != null) {
-                                    filteredNotes = notes.where((note) => note.category == selectedCategory).toList();
-                                  } else {
-                                    filteredNotes = notes;
-                                  }
-                                });
-                              }
-                            },
-                            title: RichText(
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              text: TextSpan(
-                                text: "${note.title} \n",
-                                style: GoogleFonts.lexend(
-                                  fontSize: 17.sp,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: note.content,
-                                    style: GoogleFonts.lexend(
-                                      fontSize: 14.sp,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                "Edited ${DateFormat('dd MMM yyyy, hh:mm a').format(note.modifiedTime)}",
-                                style: GoogleFonts.lexend(
-                                  fontSize: 10,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ),
-                            trailing: PopupMenuButton<int>(
-                              onSelected: (value) {
-                                if (value == 0) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext dialogContext) {
-                                      return AlertDialog(
-                                        title: const Icon(Icons.info),
-                                        content: SizedBox(
-                                          height: 3.h,
-                                          child: Text(
-                                            "Are you sure ?",
-                                            style: GoogleFonts.lexend(
-                                              fontSize: 18.sp,
-                                            ),
-                                          ),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(dialogContext);
-                                            },
-                                            child: Text(
-                                              "Cancel",
-                                              style: GoogleFonts.lexend(
-                                                  color: Colors.blue),
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              deleteNote(index);
-                                              Navigator.pop(dialogContext);
-                                            },
-                                            child: Text(
-                                              "Delete",
-                                              style: GoogleFonts.lexend(
-                                                  color: Colors.red),
-                                            ),
-                                          ),
-                                        ],
+                                if (result != null) {
+                                  setState(() {
+                                    final noteIndex = notes.indexWhere((n) => n.id == filteredNotes[index].id);
+                                    
+                                    if (noteIndex != -1) {
+                                      notes[noteIndex] = Note(
+                                        id: notes[noteIndex].id,
+                                        title: result[0],
+                                        content: result[1],
+                                        modifiedTime: DateTime.now(),
+                                        category: result[2] ?? notes[noteIndex].category,
                                       );
-                                    },
-                                  );
-                                } else if (value == 1) {
-                                  
+
+                                      // Reapply current filtering
+                                      if (selectedCategory != null) {
+                                        filteredNotes = notes
+                                            .where((note) => note.category == selectedCategory)
+                                            .toList();
+                                      } else {
+                                        filteredNotes = List.from(notes);
+                                      }
+                                    }
+                                  });
                                 }
                               },
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  value: 0,
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      const SizedBox(width: 10),
-                                      Text("Delete",
-                                          style:
-                                              GoogleFonts.lexend(fontSize: 14)),
-                                    ],
+                              title: RichText(
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  text: "${note.title} \n",
+                                  style: GoogleFonts.lexend(
+                                    fontSize: 17.sp,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: note.content,
+                                      style: GoogleFonts.lexend(
+                                        fontSize: 14.sp,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  "Edited ${DateFormat('dd MMM yyyy, hh:mm a').format(note.modifiedTime)}",
+                                  style: GoogleFonts.lexend(
+                                    fontSize: 10,
+                                    color: Colors.black54,
                                   ),
                                 ),
-                                PopupMenuItem(
-                                  value: 1,
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      const SizedBox(width: 10),
-                                      Text("Edit",
-                                          style:
-                                              GoogleFonts.lexend(fontSize: 14)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              icon: const Icon(Icons.menu),
+                              ),
                             ),
                           ),
                         ),
@@ -366,19 +347,23 @@ class _HomeState extends State<Home> {
 
               if (result != null) {
                 setState(() {
-                  notes.add(Note(
-                    id: notes.length,
+                  final newNote = Note(
+                    id: notes.isNotEmpty ? notes.last.id + 1 : 0,
                     title: result[0],
                     content: result[1],
                     modifiedTime: DateTime.now(),
                     category: result[2] ?? NoteCategory.miscellaneous,
-                  )); 
+                  );
                   
+                  notes.add(newNote);
+
                   // Reapply current filtering
                   if (selectedCategory != null) {
-                    filteredNotes = notes.where((note) => note.category == selectedCategory).toList();
+                    filteredNotes = notes
+                        .where((note) => note.category == selectedCategory)
+                        .toList();
                   } else {
-                    filteredNotes = notes;
+                    filteredNotes = List.from(notes);
                   }
                 });
               }
@@ -394,7 +379,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  // Helper method to get icons for categories
   IconData _getCategoryIcon(NoteCategory category) {
     switch (category) {
       case NoteCategory.lectureNotes:
