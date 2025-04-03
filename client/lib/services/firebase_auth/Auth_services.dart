@@ -24,7 +24,7 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      
+      UserServices.saveUser(userCredential.user!.uid);
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';

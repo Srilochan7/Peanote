@@ -1,5 +1,5 @@
 import 'package:counter_x/blocs/AuthBloc/auth_bloc.dart';
-import 'package:counter_x/models/note_model.dart';
+import 'package:counter_x/models/NotesModel/note_model.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

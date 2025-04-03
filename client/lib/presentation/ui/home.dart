@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:counter_x/models/note_model.dart';
+import 'package:counter_x/models/NotesModel/note_model.dart';
 import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -220,19 +220,83 @@ class _HomeState extends State<Home> {
                                   context: context,
                                   builder: (BuildContext context) {
                                     return AlertDialog(
-                                      title: Text("Confirmation"),
-                                      content: Text("Are you sure you want to delete this note?"),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false),
-                                          child: Text("Cancel"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(true),
-                                          child: Text("Delete"),
-                                        ),
-                                      ],
-                                    );
+  backgroundColor: const Color.fromARGB(255, 232, 230, 244),
+  elevation: 8,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(20),
+    side: BorderSide(
+      color: Colors.grey.withOpacity(0.2),
+      width: 1,
+    ),
+  ),
+  titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+  contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+  actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  title: Text(
+    "Confirmation",
+    style: GoogleFonts.lexend(
+      fontSize: 18.sp,
+      fontWeight: FontWeight.w700,
+      color: Colors.black87,
+      letterSpacing: 0.2,
+    ),
+  ),
+  content: Text(
+    "Are you sure you want to delete this note?",
+    style: GoogleFonts.lexend(
+      fontSize: 14.sp,
+      color: Colors.black54,
+      height: 1.4,
+    ),
+  ),
+  actions: [
+    Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey.withOpacity(0.1),
+      ),
+      child: TextButton(
+        onPressed: () => Navigator.of(context).pop(false),
+        style: TextButton.styleFrom(
+          minimumSize: Size(100, 42),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          foregroundColor: Colors.black87,
+          textStyle: GoogleFonts.lexend(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        child: const Text("Cancel"),
+      ),
+    ),
+    const SizedBox(width: 8),
+    Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.redAccent.withOpacity(0.1),
+      ),
+      child: TextButton(
+        onPressed: () => Navigator.of(context).pop(true),
+        style: TextButton.styleFrom(
+          minimumSize: Size(100, 42),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          foregroundColor: Colors.redAccent,
+          textStyle: GoogleFonts.lexend(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        child: const Text("Delete"),
+      ),
+    ),
+  ],
+);
                                   },
                                 );
                               }

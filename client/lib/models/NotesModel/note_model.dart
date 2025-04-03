@@ -12,7 +12,7 @@ class Note {
     this.analysisText,
     required this.id,
     required this.title,
-    required this.content,
+    required this.content,  
     required this.modifiedTime,
     this.category = NoteCategory.miscellaneous,
   });
