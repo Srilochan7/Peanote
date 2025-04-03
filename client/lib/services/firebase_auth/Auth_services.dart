@@ -1,3 +1,4 @@
+import 'package:counter_x/services/UserServices/userService.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -83,7 +84,7 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      
+      UserServices.saveUser(userCredential.user!.uid);
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';

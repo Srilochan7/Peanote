@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
+import 'package:counter_x/services/UserServices/userService.dart';
 import 'package:counter_x/services/firebase_auth/Auth_services.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -58,7 +59,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // Handle LogoutRequested event
   Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
     try {
+      log( "Logout requested");
       await FirebaseAuth.instance.signOut();
+      UserServices.deleteUser();
       emit(AuthInitial()); // Reset to initial state after successful logout
     } catch (e) {
       emit(AuthFailure("Logout failed: ${e.toString()}")); // Emit failure state if logout fails

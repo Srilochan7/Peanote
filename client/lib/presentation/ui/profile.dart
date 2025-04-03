@@ -213,9 +213,9 @@ class _ProfileState extends State<Profile> {
       );
 
       // ✅ Navigate to Login Page (Update the route accordingly)
-      Future.delayed(Duration(milliseconds: 500), () {
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Login()), (route) => false);
-      });
+      context.read<AuthBloc>().add(LogoutRequested());
+      Navigator.pushReplacement(
+        context,  MaterialPageRoute( builder: (context) => const Login()));
 
 
 

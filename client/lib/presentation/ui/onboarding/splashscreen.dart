@@ -1,4 +1,7 @@
+import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/presentation/ui/auth/signup.dart';
+import 'package:counter_x/services/UserServices/userService.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
@@ -90,10 +93,37 @@ class _SplashscreenState extends State<Splashscreen> with TickerProviderStateMix
       _textController.forward();
     });
     
-    // Navigate to signup page after animation completes
     Timer(const Duration(milliseconds: 3500), () {
-      Navigator.of(context).pushReplacement(
+      UserServices.getUser().then((user) {// Navigate to signup page after animation completes
+    
+        if (user != null) {
+          // User is already logged in, navigate to the main app screen
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                var curve = Curves.easeInOut;
+                var curveTween = CurveTween(curve: curve);
+                var fadeTween = Tween<double>(begin: 0.0, end: 1.0);
+                var scaleTween = Tween<double>(begin: 0.8, end: 1.0);
+                
+                return FadeTransition(
+                  opacity: animation.drive(fadeTween).drive(curveTween),
+                  child: ScaleTransition(
+                    scale: animation.drive(scaleTween).drive(curveTween),
+                    child: child,
+                  ),
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 800),
+            ),
+          );
+        } else {
+          // User is not logged in, navigate to the signup page
+          Navigator.of(context).pushReplacement(
         PageRouteBuilder(
+          //sadfsfsgfsafsdfsf
+          
           pageBuilder: (context, animation, secondaryAnimation) => const SignUp(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             var curve = Curves.easeInOut;
@@ -112,6 +142,10 @@ class _SplashscreenState extends State<Splashscreen> with TickerProviderStateMix
           transitionDuration: const Duration(milliseconds: 800),
         ),
       );
+         
+        }
+      });
+      
     });
   }
 
