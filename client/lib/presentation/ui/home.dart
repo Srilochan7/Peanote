@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:counter_x/models/NotesModel/note_model.dart';
+import 'package:counter_x/models/NotesModel/nm.dart';
 import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
