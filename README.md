@@ -32,5 +32,3 @@ That’s it! You’re good to go.
 You can now write notes and see them summarized in seconds.
 
 ---
-
-Let me know if you want help setting up the AI part or writing docs for that too!
