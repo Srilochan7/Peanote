@@ -1,43 +1,47 @@
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:counter_x/models/NotesModel/notes_model.dart';
 
 class UserModel {
-  String? uid;
-  String? name;
-  String? email;
-  String? profilePic;
-  DateTime? createdAt;
-  bool? subscription;
+  String id;
+  String name;
+  String email;
+  String profilePic;
+  bool subscription;
+  DateTime createdAt;
+  
 
   UserModel({
-    this.uid,
-    this.name,
-    this.email,
-    this.profilePic,
-    this.createdAt,
-    this.subscription,
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.profilePic,
+    required this.subscription,
+    required this.createdAt,
+    
   });
 
-  // Convert UserModel to Firestore JSON
+  // 🔹 Correct: Convert to JSON for Firestore
   Map<String, dynamic> toJson() {
     return {
-      'uid': uid,
-      'name': name,
-      'email': email,
-      'profilePic': profilePic,
-      'createdAt': createdAt?.toIso8601String(),
-      'subscription': subscription,
+      "name": name,
+      "email": email,
+      "profilePic": profilePic,
+      "subscription": subscription,
+      "createdAt": Timestamp.fromDate(createdAt), // ✅ Firestore-friendly
+      
     };
   }
 
-  // Convert Firestore JSON to UserModel
-  factory UserModel.fromJson(Map<String, dynamic> json) {
+  // 🔹 Correct: Convert from Firestore JSON
+  factory UserModel.fromJson(String id, Map<String, dynamic> json) {
     return UserModel(
-      uid: json['uid'],
-      name: json['name'],
-      email: json['email'],
-      profilePic: json['profilePic'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      subscription: json['subscription'],
+      id: id,
+      name: json["name"] ?? "",
+      email: json["email"] ?? "",
+      profilePic: json["profilePic"] ?? "",
+      subscription: json["subscription"] ?? false,
+      createdAt: (json["createdAt"] as Timestamp).toDate(),
+     
     );
   }
 }

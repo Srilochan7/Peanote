@@ -14,6 +14,9 @@ Future<void> main() async {
   await Hive.initFlutter();
   await Firebase.initializeApp();
   Hive.registerAdapter(UserHiveModelAdapter());
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(UserHiveModelAdapter());
+  }
   runApp(const MyApp());
 }
 

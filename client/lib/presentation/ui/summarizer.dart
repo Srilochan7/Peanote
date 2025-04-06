@@ -32,7 +32,7 @@ class _SummarizerState extends State<Summarizer> {
     });
 
     try {
-      final uri = Uri.parse("http://192.168.1.14:5000/upload");
+      final uri = Uri.parse("http://192.168.74.10:5000/upload");
 
       var request = http.MultipartRequest('POST', uri);
 

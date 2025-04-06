@@ -58,18 +58,30 @@ class _SplashscreenState extends State<Splashscreen> with TickerProviderStateMix
     // Start animations immediately
     _mainController.forward();
     
-    // Navigate after exactly 1 second
-    Timer(const Duration(milliseconds: 1000), () {
-      UserServices.getUser().then((user) {
-        if (user != null) {
-          // User is logged in, navigate to the main app screen
-          _navigateToMain();
-        } else {
-          // User is not logged in, navigate to the signup page
-          _navigateToSignup();
-        }
-      });
-    });
+
+  Timer(const Duration(milliseconds: 1000), () {
+  if (!mounted) return;
+
+  UserServices.getUser().then((user) {
+    if (!mounted) return;
+
+    if (user != null) {
+      _navigateToMain();
+    } else {
+      _navigateToSignup();
+    }
+  });
+});
+  
+
+    
+    // Dispose the controller after the animation is done
+    _mainController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _mainController.dispose();
+      }
+    }
+);
   }
 
   void _navigateToMain() {

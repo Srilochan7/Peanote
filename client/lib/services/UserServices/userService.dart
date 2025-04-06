@@ -15,17 +15,28 @@ class UserServices {
     log('User saved: ${user.toJson()}');
     await box.close();
   }
-  static Future<UserHiveModel?> getUser() async {
-    final box = await Hive.openBox<UserHiveModel>(userBox);
-    final user = box.get(_userKey);
-    await box.close();
-    return user;
-  }
+    static Future<String?> getUser() async {
+      final box = await Hive.openBox<UserHiveModel>(userBox);
+      final user = box.get(_userKey);
+
+      final uid = user?.uid; // ✅ Safely read before closing the box
+
+      await box.close(); // ✅ Now safe to close
+
+      if (uid == null) {
+        log('No user found in Hive');
+      }
+
+      return uid;
+    }
+
   static Future<void> deleteUser() async {
     final box = await Hive.openBox<UserHiveModel>(userBox);
     await box.delete(_userKey);
     log("user deleq");
     await box.close();
   }
+
+  static void addUser(String uid) {}
 
 }

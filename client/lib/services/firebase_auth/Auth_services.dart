@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:counter_x/models/UserModels/UserModel.dart';
+import 'package:counter_x/services/UserServices/FirestoreServices/firestore_service.dart';
 import 'package:counter_x/services/UserServices/userService.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +27,19 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      UserServices.saveUser(userCredential.user!.uid);
+      
+      FirestoreService().addUser(
+        UserModel(
+          id: userCredential.user!.uid,
+          name: email.split('@')[0],
+          email: email,
+          profilePic: "",
+          subscription: false,
+          createdAt: DateTime.now(),
+        ),
+      );
+      
+      UserServices.addUser(userCredential.user!.uid);
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';
@@ -76,6 +91,8 @@ class AuthService {
         password: password,
       );
 
+      UserServices.saveUser(userCredential.user!.uid);
+
       Fluttertoast.showToast(
         msg: "Login Successful",
         toastLength: Toast.LENGTH_SHORT,
@@ -84,7 +101,29 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      UserServices.saveUser(userCredential.user!.uid);
+      final uid = userCredential.user!.uid;
+
+// 🔍 Check if user doc exists
+final docSnapshot = await FirebaseFirestore.instance
+    .collection('users')
+    .doc(uid)
+    .get();
+
+if (!docSnapshot.exists) {
+  // First time login (e.g. Google Sign-In or new email user)
+  final userModel = UserModel(
+    id: uid,
+    name: email.split('@')[0],
+    email: email,
+    profilePic: "", // or from Google
+    subscription: false,
+    createdAt: DateTime.now(),
+  );
+
+  await FirestoreService().addUser(userModel);
+}
+
+      UserServices.addUser(userCredential.user!.uid);
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';
