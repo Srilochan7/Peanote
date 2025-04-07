@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:counter_x/blocs/AuthBloc/auth_bloc.dart';
 import 'package:counter_x/models/NotesModel/nm.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,11 +17,36 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   // User profile details
-  String userName = "John Doe";
-  String userEmail = "johndoe@example.com";
-  int totalNotes =  1;
-  int categorizedNotes = 1;
-  
+  String userName = "Loading...";
+  String userEmail = "loading...";
+  int totalNotes =  0;
+  int categorizedNotes = 0;
+  // String profilePic = "https://i.pravatar.cc/150?img=${DateTime.now().millisecondsSinceEpoch % 70}"; // Random user image
+  String profilePic = ""; // Placeholder image
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfileDetails();
+  }
+  Future<void> _fetchUserProfileDetails() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if(user != null) {
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+          if(docSnapshot.exists){
+            final userData = docSnapshot.data() as Map<String, dynamic>;
+            setState(() {
+              userName = userData['name'] ?? "Loading...";
+              userEmail = userData['email'] ?? "Loading...";
+              profilePic = userData['profilePic'] ?? "https://i.pravatar.cc/150?img=${DateTime.now().millisecondsSinceEpoch % 70}"; // Random user image
+              totalNotes = userData['notes']?.length ?? 0;
+            });
+          }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
