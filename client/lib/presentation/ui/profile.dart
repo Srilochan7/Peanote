@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:counter_x/blocs/AuthBloc/auth_bloc.dart';
 import 'package:counter_x/models/NotesModel/nm.dart';
+import 'package:counter_x/models/NotesModel/notes_model.dart';
+import 'package:counter_x/models/UserModels/UserModel.dart';
 import 'package:counter_x/presentation/ui/auth/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,23 +32,40 @@ class _ProfileState extends State<Profile> {
     _fetchUserProfileDetails();
   }
   Future<void> _fetchUserProfileDetails() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if(user != null) {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    try {
       final docSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
-          if(docSnapshot.exists){
-            final userData = docSnapshot.data() as Map<String, dynamic>;
-            setState(() {
-              userName = userData['name'] ?? "Loading...";
-              userEmail = userData['email'] ?? "Loading...";
-              profilePic = userData['profilePic'] ?? "https://i.pravatar.cc/150?img=${DateTime.now().millisecondsSinceEpoch % 70}"; // Random user image
-              totalNotes = userData['notes']?.length ?? 0;
-            });
-          }
+
+      if (docSnapshot.exists) {
+        final userData = docSnapshot.data() as Map<String, dynamic>;
+        
+        // Parse notes - assuming they're stored as a List<Map> in Firestore
+        final notesList = (userData['notes'] as List<dynamic>?)?.map((note) {
+          return NoteModel.fromJson(note as Map<String, dynamic>);
+        }).toList() ?? [];
+
+        setState(() {
+          userName = userData['name'] ?? user.email?.split('@')[0] ?? "User";
+          userEmail = userData['email'] ?? user.email ?? "No email";
+          profilePic = userData['profilePic'] ?? "https://i.pravatar.cc/150?img=1";
+          totalNotes = notesList.length;
+          categorizedNotes = notesList.length;
+        });
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+      // Fallback values if there's an error
+      setState(() {
+        userName = "Error loading";
+        userEmail = "Error loading";
+      });
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -107,8 +126,10 @@ class _ProfileState extends State<Profile> {
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: Colors.white54,
-                            backgroundImage: NetworkImage(
-                                "https://i.pravatar.cc/150?img=${DateTime.now().millisecondsSinceEpoch % 70}" // Random user image
+                            backgroundImage: profilePic.isNotEmpty
+                                ? NetworkImage(profilePic)
+                                : const NetworkImage(
+                                "https://i.pravatar.cc/150?img=1" // Default user image
                                 ),
                           ),
                           const SizedBox(height: 15),
@@ -146,7 +167,7 @@ class _ProfileState extends State<Profile> {
                           children: [
                             _buildStatColumn('Total Notes', totalNotes),
                             _buildStatColumn('Categorized', categorizedNotes),
-                            _buildStatColumn('Summaries', 5),
+                            // _buildStatColumn('Summaries', 5),
                           ],
                         ),
                       ),

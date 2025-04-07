@@ -41,13 +41,13 @@ extension NoteCategoryExtension on NoteCategory {
   Color get iconColor {
     switch (this) {
       case NoteCategory.lectureNotes:
-        return Colors.blue;
+        return const Color(0xFF9C27B0); // Deep Purple
       case NoteCategory.analyzedNotes:
-        return Colors.purple;
+        return const Color(0xFF2196F3); // Blue
       case NoteCategory.examPrep:
-        return Colors.orange;
+        return const Color(0xFFFF9800); // Orange
       case NoteCategory.assignments:
-        return Colors.green;
+        return const Color(0xFF4CAF50); // Green
       case NoteCategory.miscellaneous:
         return Colors.grey;
     }

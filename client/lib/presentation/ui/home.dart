@@ -935,32 +935,35 @@ class _HomeState extends State<Home> {
   Color _getCategoryColor(String category) {
     switch (category) {
       case "lectureNotes":
-        return Colors.blue.shade100;
+           return const Color(0xFFF3E5F5); // Light Purple
       case "analyzedNotes":
-        return Colors.amber.shade100;
+         return const Color(0xFFE3F2FD); // Light Blue
       case "examPrep":
-        return Colors.green.shade100;
+         return const Color(0xFFFFF3E0); 
       case "assignments":
-        return Colors.purple.shade100;
+         return const Color(0xFFE8F5E9); 
       case "miscellaneous":
       default:
-        return Colors.grey.shade100;
+        return const Color(0xFFF5F5F5);
     }
+    
+
   }
 
   Color _getCategoryIconColor(String category) {
     switch (category) {
       case "lectureNotes":
-        return Colors.blue;
+        return const Color(0xFF9C27B0); // Deep Purple
       case "analyzedNotes":
-        return Colors.amber;
+        return const Color(0xFF2196F3); // Blue
       case "examPrep":
-        return Colors.green;
+        return const Color(0xFFFF9800); // Orange 
       case "assignments":
-        return Colors.purple;
+        return const Color(0xFF4CAF50); // Green
       case "miscellaneous":
       default:
         return Colors.grey;
+
     }
   }
 
