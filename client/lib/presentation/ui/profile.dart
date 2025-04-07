@@ -17,8 +17,8 @@ class _ProfileState extends State<Profile> {
   // User profile details
   String userName = "John Doe";
   String userEmail = "johndoe@example.com";
-  int totalNotes = notes.length;
-  int categorizedNotes = notes.length;
+  int totalNotes =  1;
+  int categorizedNotes = 1;
   
 
   @override

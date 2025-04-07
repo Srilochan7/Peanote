@@ -7,39 +7,26 @@ import 'package:counter_x/models/UserModels/UserModel.dart';
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // User related functions
   Future<void> addUser(UserModel user) async {
-    final uid = user.id;
     try {
       await _firestore.collection('users').doc(user.id).set(user.toJson());
-      // Create an empty document in notes collection for this user
-      await _firestore.collection('notes').doc(uid).set({
-        'createdAt': Timestamp.now(),
-      });
     } catch (e) {
-      print("Error adding user: $e");
+      log("Error adding user: $e");
       rethrow;
     }
   }
 
+  // Note related functions
   Future<void> addNoteToUser(String userId, NoteModel noteData) async {
     try {
-      // Two options:
-      // 1. If you want to use the ID from noteData:
-      if (noteData.id != null && noteData.id.isNotEmpty && noteData.id != 'hjn') {
-        await _firestore
-            .collection('notes')
-            .doc(userId)
-            .collection('notes')
-            .add(noteData.toJson());
-      } 
-      // 2. If you want Firebase to generate an ID:
-      else {
-        await _firestore
-            .collection('notes')
-            .doc(userId)
-            .collection('notes')
-            .add(noteData.toJson());
-      }
+      // Use a consistent path for notes
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .add(noteData.toJson());
+      
       log("Note added successfully for user: $userId");
     } catch (e) {
       log("Error adding note: $e");
@@ -47,37 +34,101 @@ class FirestoreService {
     }
   }
 
-  Future<List<NoteModel>> getUserNotes(String uid) async {
-    final snapshot = await _firestore
-        .collection('notes')
-        .doc(uid)
-        .collection('userNotes')
-        .get();
-    return snapshot.docs
-        .map((doc) => NoteModel.fromJson(doc.data()))
-        .toList();
-  }
-
-  Future<List<NoteModel>> fetchNotes(String uid) async {
-    final querySnapshot = await _firestore
-        .collection('notes')
-        .doc(uid)
-        .collection('notes')
-        .get();
-    return querySnapshot.docs
-        .map((doc) => NoteModel.fromJson(doc.data() as Map<String, dynamic>))
-        .toList();
-  }
-
+  // Fetch notes as a stream (real-time)
   Stream<List<NoteModel>> getNotesStream(String uid) {
     return _firestore
-        .collection('notes')
+        .collection('users')
         .doc(uid)
         .collection('notes')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => NoteModel.fromJson(doc.data()))
-            .toList());
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            // Create a note with the Firestore document ID
+            Map<String, dynamic> data = doc.data();
+            data['id'] = doc.id; // Add the document ID to the data
+            return NoteModel.fromJson(data);
+          }).toList();
+        });
   }
   
+  // Update a note
+  Future<void> updateNote(String userId, NoteModel note) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .doc(note.id)
+          .update(note.toJson());
+      
+      log("Note updated successfully");
+    } catch (e) {
+      log("Error updating note: $e");
+      rethrow;
+    }
+  }
+  
+  // Delete a note
+  Future<void> deleteNote(String userId, String noteId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .doc(noteId)
+          .delete();
+      
+      log("Note deleted successfully");
+    } catch (e) {
+      log("Error deleting note: $e");
+      rethrow;
+    }
+  }
+  
+  // Search notes
+  Future<List<NoteModel>> searchNotes(String userId, String searchText) async {
+    try {
+      // This is a simple implementation. For more complex search, consider using Firebase extensions
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .get();
+          
+      return snapshot.docs
+          .map((doc) {
+            Map<String, dynamic> data = doc.data();
+            data['id'] = doc.id;
+            return NoteModel.fromJson(data);
+          })
+          .where((note) => 
+              note.content.toLowerCase().contains(searchText.toLowerCase()) ||
+              note.title.toLowerCase().contains(searchText.toLowerCase()))
+          .toList();
+    } catch (e) {
+      log("Error searching notes: $e");
+      return [];
+    }
+  }
+  
+  // Filter notes by category
+  Future<List<NoteModel>> filterNotesByCategory(String userId, String category) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .where('category', isEqualTo: category)
+          .get();
+          
+      return snapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data();
+        data['id'] = doc.id;
+        return NoteModel.fromJson(data);
+      }).toList();
+    } catch (e) {
+      log("Error filtering notes: $e");
+      return [];
+    }
+  }
 }

@@ -8,13 +8,22 @@ class UserServices {
   static const String userBox = 'userBox';
   static const String _userKey = 'currentUser';
 
+  // static Future<void> saveUser(String uid) async {
+  //   final box = await Hive.openBox<UserHiveModel>(userBox);
+  //   final user = UserHiveModel(uid: uid);
+  //   await box.put(_userKey, user);
+  //   log('User saved: ${user.toJson()}');
+  //   await box.close();
+  // }
+
   static Future<void> saveUser(String uid) async {
-    final box = await Hive.openBox<UserHiveModel>(userBox);
-    final user = UserHiveModel(uid: uid);
-    await box.put(_userKey, user);
-    log('User saved: ${user.toJson()}');
-    await box.close();
-  }
+  final box = await Hive.openBox<UserHiveModel>(userBox);
+  final user = UserHiveModel(uid: uid);
+  await box.put(_userKey, user);
+  log('User saved: ${user.toJson()}');
+  await box.close();
+}
+
     static Future<String?> getUser() async {
       final box = await Hive.openBox<UserHiveModel>(userBox);
       final user = box.get(_userKey);

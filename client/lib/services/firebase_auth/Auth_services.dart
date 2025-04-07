@@ -18,6 +18,25 @@ class AuthService {
         email: email,
         password: password,
       );
+      
+      final uid = userCredential.user!.uid;
+      
+      // Create user document in Firestore
+      final userModel = UserModel(
+        id: uid,
+        name: email.split('@')[0],
+        email: email,
+        profilePic: "",
+        subscription: false,
+        createdAt: DateTime.now(),
+        notes: [],
+      );
+
+      await FirestoreService().addUser(userModel);
+      
+      // Save user locally
+      await UserServices.saveUser(uid);
+      UserServices.addUser(uid);
 
       Fluttertoast.showToast(
         msg: "Sign Up Successful",
@@ -27,19 +46,7 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      
-      FirestoreService().addUser(
-        UserModel(
-          id: userCredential.user!.uid,
-          name: email.split('@')[0],
-          email: email,
-          profilePic: "",
-          subscription: false,
-          createdAt: DateTime.now(),
-        ),
-      );
-      
-      UserServices.addUser(userCredential.user!.uid);
+
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';
@@ -60,7 +67,6 @@ class AuthService {
         fontSize: 14.sp,
       );
       
-      // Rethrow the exception so the bloc can handle it
       throw FirebaseAuthException(
         code: e.code,
         message: message,
@@ -75,7 +81,6 @@ class AuthService {
         fontSize: 14.sp,
       );
      
-      // Rethrow the exception
       throw Exception("An unexpected error occurred: $e");
     }
   }
@@ -91,7 +96,32 @@ class AuthService {
         password: password,
       );
 
-      UserServices.saveUser(userCredential.user!.uid);
+      final uid = userCredential.user!.uid;
+
+      // Check if user doc exists
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (!docSnapshot.exists) {
+        // Create user document if it doesn't exist
+        final userModel = UserModel(
+          id: uid,
+          name: email.split('@')[0],
+          email: email,
+          profilePic: "",
+          subscription: false,
+          createdAt: DateTime.now(),
+          notes: [],
+        );
+
+        await FirestoreService().addUser(userModel);
+      }
+
+      // Save user locally
+      await UserServices.saveUser(uid);
+       UserServices.addUser(uid);
 
       Fluttertoast.showToast(
         msg: "Login Successful",
@@ -101,29 +131,7 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.sp,
       );
-      final uid = userCredential.user!.uid;
 
-// 🔍 Check if user doc exists
-final docSnapshot = await FirebaseFirestore.instance
-    .collection('users')
-    .doc(uid)
-    .get();
-
-if (!docSnapshot.exists) {
-  // First time login (e.g. Google Sign-In or new email user)
-  final userModel = UserModel(
-    id: uid,
-    name: email.split('@')[0],
-    email: email,
-    profilePic: "", // or from Google
-    subscription: false,
-    createdAt: DateTime.now(),
-  );
-
-  await FirestoreService().addUser(userModel);
-}
-
-      UserServices.addUser(userCredential.user!.uid);
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       String message = '';
@@ -144,7 +152,6 @@ if (!docSnapshot.exists) {
         fontSize: 14.sp,
       );
      
-      // Rethrow the exception
       throw FirebaseAuthException(
         code: e.code,
         message: message,
@@ -159,7 +166,6 @@ if (!docSnapshot.exists) {
         fontSize: 14.sp,
       );
       
-      // Rethrow the exception
       throw Exception("An unexpected error occurred: $e");
     }
   }

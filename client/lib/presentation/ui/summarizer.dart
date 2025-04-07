@@ -1,9 +1,14 @@
 import 'dart:convert';
+import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:counter_x/main_screen.dart';
 import 'package:counter_x/models/NotesModel/nm.dart';
+import 'package:counter_x/models/NotesModel/notes_model.dart';
 import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:counter_x/presentation/widgets/file_picker.dart';
+import 'package:counter_x/services/UserServices/FirestoreServices/firestore_service.dart';
+import 'package:counter_x/services/UserServices/userService.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -19,9 +24,11 @@ class Summarizer extends StatefulWidget {
 class _SummarizerState extends State<Summarizer> {
   String? selectedFilePath;
   bool isLoading = false;
+  String _userId = '';
   String? analysisText;
   Map<String, dynamic>? responseData;
   bool showResults = false;
+   bool _isLoading = true; 
 
   Future<void> sendFileToServer(String filePath) async {
     setState(() {
@@ -132,6 +139,28 @@ class _SummarizerState extends State<Summarizer> {
     return null;
   }
 
+  Future<void> _initializeData() async {
+    await getUserID();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> getUserID() async {
+    try {
+      final userId = await UserServices.getUser();
+      if (userId != null && userId.isNotEmpty) {
+        setState(() {
+          _userId = userId;
+          log("User ID: $_userId");
+        });
+      } else {
+        log("Warning: User ID is null or empty");
+      }
+    } catch (e) {
+      log("Error getting user ID: $e");
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Sizer(
@@ -394,39 +423,72 @@ if (showResults && analysisText != null)
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton.icon(
-  onPressed: () async {
-  if (analysisText != null && analysisText.toString().length >= 2) {
-    selectedFilePath = selectedFilePath.toString().split('/').last;
-    final newNote = Note(
-      id: notes.length,
-      title: selectedFilePath.toString(),
-      content: analysisText.toString(),
-      modifiedTime: DateTime.now(),
-      category: NoteCategory.analyzedNotes,
-    );
+  onPressed: () async { log("FAB tapped");
+              log(_userId.toString());
+              // Check if user ID is available
+              if (_userId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('User not logged in or user ID not found', 
+                                style: GoogleFonts.lexend()),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
 
-    // Navigate to Notepad and wait for edited note data
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Notepad(note: newNote),
-      ),
-    );
-    Navigator.push(context, MaterialPageRoute(builder: (context)=>MainScreen()));
-
-    if (result != null && result is List) {
-      setState(() {
-        notes.add(Note(
-          id: notes.length,
-          title: result[0],
-          content: result[1],
-          modifiedTime: DateTime.now(),
-          category: result[2],
-        ));
-      });
-    }
-  }
-},
+           
+              // Only proceed if we have title or content
+              if (analysisText != null && analysisText.toString().length >= 2) {
+                selectedFilePath = selectedFilePath.toString().split('/').last;
+                final NoteModel noteData = NoteModel(
+                  title: selectedFilePath.toString(),
+                  content: analysisText.toString(),
+                  category: NoteCategory.analyzedNotes.toString(),
+                  createdAt: Timestamp.now(),
+                  id: analysisText?.length.toString() ?? '0',
+                );
+                
+                try {
+                  FirestoreService notesService = FirestoreService();
+                  await notesService.addNoteToUser(_userId, noteData);
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Note saved!', style: GoogleFonts.lexend()),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                    
+                    await Future.delayed(const Duration(milliseconds: 500));
+                    Navigator.pop(context);
+                  }
+                } catch (e) {
+                  log("Error saving note: $e");
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error saving note: $e', style: GoogleFonts.lexend()),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              } else {
+                // Content validation failed
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Note cannot be empty!', style: GoogleFonts.lexend()),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: Colors.red.shade300,
+                    ),
+                  );
+                }
+              }
+            },
 
   icon: const Icon(Icons.save, color: Colors.white, size: 20),
   label: Text(

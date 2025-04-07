@@ -460,21 +460,15 @@
 //     }
 //   }
 // }
-
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:counter_x/models/NotesModel/notes_model.dart';
 import 'package:counter_x/services/UserServices/FirestoreServices/firestore_service.dart';
-
 import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
-import 'package:http/http.dart' as http;
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -484,8 +478,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<NoteModel> notes = [];
   List<NoteModel> filteredNotes = [];
+  List<NoteModel> allNotes = [];
   bool sorted = false;
   String? selectedCategory;
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
@@ -495,36 +489,13 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    _fetchNotes();
+    _initializeNotes();
   }
 
-  Future<void> _fetchNotes() async {
+  void _initializeNotes() {
     setState(() {
-      _isLoading = true;
+      _isLoading = false; // Set to false as we're using a stream now
     });
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final fetchedNotes = await _firestoreService.fetchNotes(user.uid);
-        setState(() {
-          notes = fetchedNotes;
-          filteredNotes = List.from(notes);
-          _isLoading = false;
-        });
-      } else {
-        // Handle case when user is not logged in
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("Error fetching notes: $e");
-      setState(() {
-        _isLoading = false;
-      });
-      // You might want to show an error message here
-    }
   }
 
   List<NoteModel> sortNotes(List<NoteModel> notes) {
@@ -538,46 +509,39 @@ class _HomeState extends State<Home> {
 
   void searchNotes(String searchText) {
     setState(() {
-      filteredNotes = notes
-          .where((note) =>
-              note.content.toLowerCase().contains(searchText.toLowerCase()) ||
-              note.title.toLowerCase().contains(searchText.toLowerCase()))
-          .toList();
+      if (searchText.isEmpty) {
+        filteredNotes = List.from(allNotes);
+      } else {
+        filteredNotes = allNotes
+            .where((note) =>
+                note.content.toLowerCase().contains(searchText.toLowerCase()) ||
+                note.title.toLowerCase().contains(searchText.toLowerCase()))
+            .toList();
+      }
     });
   }
 
   void filterByCategory(String category) {
     setState(() {
       selectedCategory = category;
-      filteredNotes = notes.where((note) => note.category == category).toList();
+      filteredNotes = allNotes.where((note) => note.category == category).toList();
     });
   }
 
   Future<void> deleteNote(int index) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
     final deletedNote = filteredNotes[index];
     
     // Remove from UI first for better user experience
     setState(() {
-      notes.removeWhere((note) => note.id == deletedNote.id);
+      allNotes.removeWhere((note) => note.id == deletedNote.id);
       filteredNotes.removeAt(index);
     });
 
-    // TODO: Implement Firebase deletion
-    // await _firestoreService.deleteNote(FirebaseAuth.instance.currentUser!.uid, deletedNote.id);
-
-    // Wait for the UI to update before rebuilding
-    await Future.delayed(Duration.zero);
-    
-    // Reapply filters if needed
-    if (selectedCategory != null) {
-      setState(() {
-        filteredNotes = notes.where((note) => note.category == selectedCategory).toList();
-      });
-    } else {
-      setState(() {
-        filteredNotes = List.from(notes);
-      });
-    }
+    // Delete from Firestore
+    await _firestoreService.deleteNote(user.uid, deletedNote.id);
   }
 
   @override
@@ -671,225 +635,224 @@ class _HomeState extends State<Home> {
                 ),
                 SizedBox(height: 1.h),
                 Expanded(
-                  child: _isLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : filteredNotes.isEmpty
-                          ? Center(
-                              child: Text(
-                                "No notes found",
-                                style: GoogleFonts.lexend(
-                                  fontSize: 18,
-                                  color: Colors.black54,
-                                ),
+                  child: StreamBuilder<List<NoteModel>>(
+                    stream: FirebaseAuth.instance.currentUser != null
+                        ? _firestoreService.getNotesStream(FirebaseAuth.instance.currentUser!.uid)
+                        : Stream.value([]),
+                    builder: (context, snapshot) {
+                      if(snapshot.connectionState == ConnectionState.waiting && _isLoading) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text("Error: ${snapshot.error}"));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Text(
+                            "No notes found. Create your first note!",
+                            style: GoogleFonts.lexend(
+                              fontSize: 18,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Update our complete notes list
+                      allNotes = snapshot.data!;
+                      
+                      // Apply any active filters
+                      if (selectedCategory != null) {
+                        filteredNotes = allNotes.where((note) => note.category == selectedCategory).toList();
+                      } else {
+                        filteredNotes = List.from(allNotes);
+                      }
+                      
+                      return ListView.builder(
+                        key: _listKey,
+                        itemCount: filteredNotes.length,
+                        itemBuilder: (context, index) {
+                          final note = filteredNotes[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10.0),
+                            child: Card(
+                              color: _getCategoryColor(note.category),
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                            )
-                          : ListView.builder(
-                              key: _listKey,
-                              itemCount: filteredNotes.length,
-                              itemBuilder: (context, index) {
-                                final note = filteredNotes[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 10.0),
-                                  child: Card(
-                                    color: _getCategoryColor(note.category),
-                                    elevation: 4,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Dismissible(
-                                      key: Key(note.id), // Unique key for each note
-                                      direction: DismissDirection.startToEnd,
-                                      confirmDismiss: (direction) async {
-                                        if (direction == DismissDirection.startToEnd) {
-                                          return await showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                backgroundColor: const Color.fromARGB(255, 232, 230, 244),
-                                                elevation: 8,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(20),
-                                                  side: BorderSide(
-                                                    color: Colors.grey.withOpacity(0.2),
-                                                    width: 1,
-                                                  ),
-                                                ),
-                                                titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                                                contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                                                actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                                title: Text(
-                                                  "Confirmation",
-                                                  style: GoogleFonts.lexend(
-                                                    fontSize: 18.sp,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.black87,
-                                                    letterSpacing: 0.2,
-                                                  ),
-                                                ),
-                                                content: Text(
-                                                  "Are you sure you want to delete this note?",
-                                                  style: GoogleFonts.lexend(
-                                                    fontSize: 14.sp,
-                                                    color: Colors.black54,
-                                                    height: 1.4,
-                                                  ),
-                                                ),
-                                                actions: [
-                                                  Container(
-                                                    decoration: BoxDecoration(
-                                                      borderRadius: BorderRadius.circular(12),
-                                                      color: Colors.grey.withOpacity(0.1),
-                                                    ),
-                                                    child: TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(false),
-                                                      style: TextButton.styleFrom(
-                                                        minimumSize: Size(100, 42),
-                                                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(12),
-                                                        ),
-                                                        foregroundColor: Colors.black87,
-                                                        textStyle: GoogleFonts.lexend(
-                                                          fontSize: 14.sp,
-                                                          fontWeight: FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                      child: const Text("Cancel"),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Container(
-                                                    decoration: BoxDecoration(
-                                                      borderRadius: BorderRadius.circular(12),
-                                                      color: Colors.redAccent.withOpacity(0.1),
-                                                    ),
-                                                    child: TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(true),
-                                                      style: TextButton.styleFrom(
-                                                        minimumSize: Size(100, 42),
-                                                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(12),
-                                                        ),
-                                                        foregroundColor: Colors.redAccent,
-                                                        textStyle: GoogleFonts.lexend(
-                                                          fontSize: 14.sp,
-                                                          fontWeight: FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                      child: const Text("Delete"),
-                                                    ),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        }
-                                        return false;
-                                      },
-                                      onDismissed: (direction) async {
-                                        await deleteNote(index);
-                                      },
-                                      background: Container(
-                                        alignment: Alignment.centerLeft,
-                                        padding: EdgeInsets.only(left: 20),
-                                        decoration: BoxDecoration(
-                                          color: Colors.redAccent.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Icon(Icons.delete, color: Colors.redAccent, size: 32),
-                                      ),
-                                      child: ListTile(
-                                        leading: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: _getCategoryIconColor(note.category).withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          child: Icon(
-                                            _getCategoryIcon(note.category),
-                                            color: _getCategoryIconColor(note.category),
-                                          ),
-                                        ),
-                                        onTap: () async {
-                                          // final result = await Navigator.push(
-                                          //     context,
-                                          //     MaterialPageRoute(
-                                          //         builder: (context) => Notepad(
-                                          //               note: note,
-                                          //             )));
-
-                                          // if (result != null) {
-                                          //   // Update note in Firebase
-                                          //   final updatedNote = NoteModel(
-                                          //     id: note.id,
-                                          //     title: result[0],
-                                          //     content: result[1],
-                                          //     createdAt: Timestamp.now(),
-                                          //     category: result[2] ?? note.category,
-                                          //   );
-                                            
-                                          //   // TODO: Implement Firebase update
-                                          //   // await _firestoreService.updateNote(
-                                          //   //   FirebaseAuth.instance.currentUser!.uid,
-                                          //   //   updatedNote
-                                          //   // );
-                                            
-                                          //   // Update local state
-                                          //   setState(() {
-                                          //     final noteIndex = notes.indexWhere((n) => n.id == note.id);
-                                          //     if (noteIndex != -1) {
-                                          //       notes[noteIndex] = updatedNote;
-                                          //     }
-
-                                          //     // Reapply current filtering
-                                          //     if (selectedCategory != null) {
-                                          //       filteredNotes = notes
-                                          //           .where((note) => note.category == selectedCategory)
-                                          //           .toList();
-                                          //     } else {
-                                          //       filteredNotes = List.from(notes);
-                                          //     }
-                                          //   });
-                                          // }
-                                        },
-                                        title: RichText(
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          text: TextSpan(
-                                            text: "${note.title} \n",
-                                            style: GoogleFonts.lexend(
-                                              fontSize: 17.sp,
-                                              color: Colors.black87,
-                                              fontWeight: FontWeight.bold,
+                              child: Dismissible(
+                                key: Key(note.id), // Unique key for each note
+                                direction: DismissDirection.startToEnd,
+                                confirmDismiss: (direction) async {
+                                  if (direction == DismissDirection.startToEnd) {
+                                    return await showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          backgroundColor: const Color.fromARGB(255, 232, 230, 244),
+                                          elevation: 8,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20),
+                                            side: BorderSide(
+                                              color: Colors.grey.withOpacity(0.2),
+                                              width: 1,
                                             ),
-                                            children: [
-                                              TextSpan(
-                                                text: note.content,
-                                                style: GoogleFonts.lexend(
-                                                  fontSize: 14.sp,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                            ],
                                           ),
-                                        ),
-                                        subtitle: Padding(
-                                          padding: const EdgeInsets.only(top: 8.0),
-                                          child: Text(
-                                            "Edited ${DateFormat('dd MMM yyyy, hh:mm a').format(note.createdAt.toDate())}",
+                                          title: Text(
+                                            "Confirmation",
                                             style: GoogleFonts.lexend(
-                                              fontSize: 10,
+                                              fontSize: 18.sp,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          content: Text(
+                                            "Are you sure you want to delete this note?",
+                                            style: GoogleFonts.lexend(
+                                              fontSize: 14.sp,
                                               color: Colors.black54,
                                             ),
                                           ),
+                                          actions: [
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(12),
+                                                color: Colors.grey.withOpacity(0.1),
+                                              ),
+                                              child: TextButton(
+                                                onPressed: () => Navigator.of(context).pop(false),
+                                                style: TextButton.styleFrom(
+                                                  minimumSize: Size(100, 42),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  foregroundColor: Colors.black87,
+                                                  textStyle: GoogleFonts.lexend(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                child: const Text("Cancel"),
+                                              ),
+                                            ),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(12),
+                                                color: Colors.redAccent.withOpacity(0.1),
+                                              ),
+                                              child: TextButton(
+                                                onPressed: () => Navigator.of(context).pop(true),
+                                                style: TextButton.styleFrom(
+                                                  minimumSize: Size(100, 42),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  foregroundColor: Colors.redAccent,
+                                                  textStyle: GoogleFonts.lexend(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                child: const Text("Delete"),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
+                                  return false;
+                                },
+                                onDismissed: (direction) async {
+                                  await deleteNote(index);
+                                },
+                                background: Container(
+                                  alignment: Alignment.centerLeft,
+                                  padding: EdgeInsets.only(left: 20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(Icons.delete, color: Colors.redAccent, size: 32),
+                                ),
+                                child: ListTile(
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: _getCategoryIconColor(note.category).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      _getCategoryIcon(note.category),
+                                      color: _getCategoryIconColor(note.category),
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => Notepad(
+                                          note: note ,
                                         ),
+                                      ),
+                                    );
+
+                                    if (result != null && FirebaseAuth.instance.currentUser != null) {
+                                      final updatedNote = NoteModel(
+                                        id: note.id,
+                                        title: result[0],
+                                        content: result[1],
+                                        createdAt: Timestamp.now(),
+                                        category: result[2] ?? note.category,
+                                      );
+                                      
+                                      // Update the note in Firestore
+                                      await _firestoreService.updateNote(
+                                        FirebaseAuth.instance.currentUser!.uid,
+                                        updatedNote
+                                      );
+                                    }
+                                  },
+                                  title: RichText(
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    text: TextSpan(
+                                      text: "${note.title} \n",
+                                      style: GoogleFonts.lexend(
+                                        fontSize: 17.sp,
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: note.content,
+                                          style: GoogleFonts.lexend(
+                                            fontSize: 14.sp,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      "Edited ${DateFormat('dd MMM yyyy, hh:mm a').format(note.createdAt.toDate())}",
+                                      style: GoogleFonts.lexend(
+                                        fontSize: 10,
+                                        color: Colors.black54,
                                       ),
                                     ),
                                   ),
-                                );
-                              },
+                                ),
+                              ),
                             ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -908,7 +871,7 @@ class _HomeState extends State<Home> {
                 final user = FirebaseAuth.instance.currentUser;
                 if (user != null) {
                   final newNote = NoteModel(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate a unique ID
+                    id: "", // Let Firestore generate the ID
                     title: result[0],
                     content: result[1],
                     createdAt: Timestamp.now(),
@@ -917,20 +880,6 @@ class _HomeState extends State<Home> {
                   
                   // Add note to Firebase
                   await _firestoreService.addNoteToUser(user.uid, newNote);
-                  
-                  // Update local state
-                  setState(() {
-                    notes.add(newNote);
-
-                    // Reapply current filtering
-                    if (selectedCategory != null) {
-                      filteredNotes = notes
-                          .where((note) => note.category == selectedCategory)
-                          .toList();
-                    } else {
-                      filteredNotes = List.from(notes);
-                    }
-                  });
                 }
               }
             },
@@ -965,7 +914,7 @@ class _HomeState extends State<Home> {
           setState(() {
             if (selectedCategory == categoryValue) {
               selectedCategory = null;
-              filteredNotes = List.from(notes);
+              filteredNotes = List.from(allNotes);
             } else {
               filterByCategory(categoryValue);
             }
