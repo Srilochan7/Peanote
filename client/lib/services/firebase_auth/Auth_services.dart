@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:counter_x/models/UserModels/UserModel.dart';
-import 'package:counter_x/services/UserServices/FirestoreServices/firestore_service.dart';
+import 'package:counter_x/services/FirestoreServices/firestore_service.dart';
 import 'package:counter_x/services/UserServices/userService.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

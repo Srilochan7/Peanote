@@ -3,11 +3,12 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:counter_x/main_screen.dart';
-import 'package:counter_x/models/NotesModel/nm.dart';
+
 import 'package:counter_x/models/NotesModel/notes_model.dart';
+import 'package:counter_x/presentation/ui/home.dart';
 import 'package:counter_x/presentation/ui/notepad.dart';
 import 'package:counter_x/presentation/widgets/file_picker.dart';
-import 'package:counter_x/services/UserServices/FirestoreServices/firestore_service.dart';
+import 'package:counter_x/services/FirestoreServices/firestore_service.dart';
 import 'package:counter_x/services/UserServices/userService.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,6 +22,8 @@ class Summarizer extends StatefulWidget {
   State<Summarizer> createState() => _SummarizerState();
 }
 
+
+
 class _SummarizerState extends State<Summarizer> {
   String? selectedFilePath;
   bool isLoading = false;
@@ -28,7 +31,37 @@ class _SummarizerState extends State<Summarizer> {
   String? analysisText;
   Map<String, dynamic>? responseData;
   bool showResults = false;
-   bool _isLoading = true; 
+  bool _isLoading = true; 
+
+
+ @override
+void initState() {
+  super.initState();
+  _initializeData(); // this will call getUserID()
+}
+
+  Future<void> _initializeData() async {
+    await getUserID(); // Fetch user ID
+    setState(() {
+      _isLoading = false; // Set loading to false after fetching user ID
+    });
+  }
+
+  Future<void> getUserID() async {
+    try {
+      final userId = await UserServices.getUser();
+      if (userId != null && userId.isNotEmpty) {
+        setState(() {
+          _userId = userId;
+          log("User ID: $_userId");
+        });
+      } else {
+        log("Warning: User ID is null or empty");
+      }
+    } catch (e) {
+      log("Error getting user ID: $e");
+    }
+  }
 
   Future<void> sendFileToServer(String filePath) async {
     setState(() {
@@ -39,7 +72,7 @@ class _SummarizerState extends State<Summarizer> {
     });
 
     try {
-      final uri = Uri.parse("http://192.168.0.161:5000/upload");
+      final uri = Uri.parse("http://192.168.1.3:5000/upload");
 
       var request = http.MultipartRequest('POST', uri);
 
@@ -139,28 +172,7 @@ class _SummarizerState extends State<Summarizer> {
     return null;
   }
 
-  Future<void> _initializeData() async {
-    await getUserID();
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<void> getUserID() async {
-    try {
-      final userId = await UserServices.getUser();
-      if (userId != null && userId.isNotEmpty) {
-        setState(() {
-          _userId = userId;
-          log("User ID: $_userId");
-        });
-      } else {
-        log("Warning: User ID is null or empty");
-      }
-    } catch (e) {
-      log("Error getting user ID: $e");
-    }
-  }
+  
   @override
   Widget build(BuildContext context) {
     return Sizer(
@@ -422,74 +434,86 @@ if (showResults && analysisText != null)
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton.icon(
-  onPressed: () async { log("FAB tapped");
-              log(_userId.toString());
-              // Check if user ID is available
-              if (_userId.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('User not logged in or user ID not found', 
-                                style: GoogleFonts.lexend()),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
+               ElevatedButton.icon(
+  onPressed: () async {
+    // Check if we have a valid user ID
+    if (_userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait while we fetch your user information'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      await getUserID();
+      if (_userId.isEmpty) return;
+    }
 
-           
-              // Only proceed if we have title or content
-              if (analysisText != null && analysisText.toString().length >= 2) {
-                selectedFilePath = selectedFilePath.toString().split('/').last;
-                final NoteModel noteData = NoteModel(
-                  title: selectedFilePath.toString(),
-                  content: analysisText.toString(),
-                  category: NoteCategory.analyzedNotes.toString(),
-                  createdAt: Timestamp.now(),
-                  id: analysisText?.length.toString() ?? '0',
-                );
-                
-                try {
-                  FirestoreService notesService = FirestoreService();
-                  await notesService.addNoteToUser(_userId, noteData);
-                  
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Note saved!', style: GoogleFonts.lexend()),
-                        backgroundColor: Colors.green,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                    
-                    await Future.delayed(const Duration(milliseconds: 500));
-                    Navigator.pop(context);
-                  }
-                } catch (e) {
-                  log("Error saving note: $e");
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error saving note: $e', style: GoogleFonts.lexend()),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              } else {
-                // Content validation failed
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Note cannot be empty!', style: GoogleFonts.lexend()),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: Colors.red.shade300,
-                    ),
-                  );
-                }
-              }
-            },
+    if (analysisText == null || analysisText!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No summary available to save.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
+    try {
+      final fileName = selectedFilePath?.split('/').last ?? 'Summary';
+      FirestoreService notesService = FirestoreService();
+
+      // Show saving indicator
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Saving summary...'),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Save the note to Firestore
+      await notesService.addNoteToUser(
+        _userId,
+        NoteModel(
+          title: "Summary of $fileName",
+          content: analysisText!,
+          createdAt: Timestamp.fromDate(DateTime.now()),
+          id: '${DateTime.now().millisecondsSinceEpoch}',
+          category: 'Analysed Notes',
+        ),
+      );
+
+      // Show success message and add delay before navigation
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Summary saved successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      
+      // Add a delay before navigation to allow SnackBar to be visible
+      await Future.delayed(const Duration(seconds: 1));
+      
+      // Navigate to main screen
+      if (mounted) {  // Check if widget is still mounted
+        Navigator.push(context, MaterialPageRoute(builder: (context) => MainScreen()));
+      }
+      
+    } catch (e) {
+      // Show error message
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving summary: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      log("Error saving note: $e");
+    }
+  },
   icon: const Icon(Icons.save, color: Colors.white, size: 20),
   label: Text(
     "Save Summary",

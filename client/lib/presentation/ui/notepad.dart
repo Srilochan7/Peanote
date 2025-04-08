@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:counter_x/models/NotesModel/nm.dart';
 import 'package:counter_x/models/NotesModel/notes_model.dart';
 import 'package:counter_x/models/UserModels/UserModel.dart';
-import 'package:counter_x/services/UserServices/FirestoreServices/firestore_service.dart';
+import 'package:counter_x/services/FirestoreServices/firestore_service.dart';
 import 'package:counter_x/services/UserServices/userService.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -135,6 +135,21 @@ class _NotepadState extends State<Notepad> {
       }
     } catch (e) {
       log("Error getting user ID: $e");
+    }
+  }
+
+  Future<void> editNote() async {
+    try {
+      final noteData = NoteModel(
+        title: _titleController.text,
+        content: _contentController.text,
+        category: _selectedCategory.name,
+        createdAt: Timestamp.now(),
+        id: widget.note?.id ?? '',
+      );
+      await FirestoreService().updateNote(_userId, noteData);
+    } catch (e) {
+      log("Error editing note: $e");
     }
   }
   
@@ -308,75 +323,76 @@ class _NotepadState extends State<Notepad> {
               ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
-              log("FAB tapped");
-              log(_userId.toString());
-              // Check if user ID is available
-              if (_userId.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('User not logged in or user ID not found', 
-                                style: GoogleFonts.lexend()),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
+  log("FAB tapped");
 
-              String title = _titleController.text.trim();
-              String content = _contentController.text.trim();
-              log("Title: $title");
-              log("Content: $content");
+  if (_userId.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('User not logged in or user ID not found',
+            style: GoogleFonts.lexend()),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
 
-              // Only proceed if we have title or content
-              if (title.isNotEmpty || content.isNotEmpty) {
-                final NoteModel noteData = NoteModel(
-                  title: title,
-                  content: content,
-                  category: _selectedCategory.name,
-                  createdAt: Timestamp.now(),
-                  id: widget.note?.id ?? '',
-                );
-                
-                try {
-                  FirestoreService notesService = FirestoreService();
-                  await notesService.addNoteToUser(_userId, noteData);
-                  
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Note saved!', style: GoogleFonts.lexend()),
-                        backgroundColor: Colors.green,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                    
-                    await Future.delayed(const Duration(milliseconds: 500));
-                    Navigator.pop(context);
-                  }
-                } catch (e) {
-                  log("Error saving note: $e");
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error saving note: $e', style: GoogleFonts.lexend()),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              } else {
-                // Content validation failed
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Note cannot be empty!', style: GoogleFonts.lexend()),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: Colors.red.shade300,
-                    ),
-                  );
-                }
-              }
-            },
+  String title = _titleController.text.trim();
+  String content = _contentController.text.trim();
+
+  if (title.isNotEmpty && content.isNotEmpty) {
+    if (widget.note != null) {
+      // This is an edit, send back to home
+      Navigator.pop(context, [title, content, _selectedCategory.name]);
+    } else {
+      // This is a new note, save it directly
+      final NoteModel noteData = NoteModel(
+        title: title,
+        content: content,
+        category: _selectedCategory.name,
+        createdAt: Timestamp.now(),
+        id: '', // Firestore will generate ID
+      );
+
+      try {
+        FirestoreService notesService = FirestoreService();
+        await notesService.addNoteToUser(_userId, noteData);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Note saved!', style: GoogleFonts.lexend()),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          await Future.delayed(const Duration(milliseconds: 500));
+          Navigator.pop(context); // No need to return result here
+        }
+      } catch (e) {
+        log("Error saving note: $e");
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text('Error saving note: $e', style: GoogleFonts.lexend()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  } else {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Note cannot be empty!', style: GoogleFonts.lexend()),
+          backgroundColor: Colors.red.shade300,
+        ),
+      );
+    }
+  }
+},
+
             elevation: 10,
             shape: const CircleBorder(),
             backgroundColor: _selectedCategory.iconColor,

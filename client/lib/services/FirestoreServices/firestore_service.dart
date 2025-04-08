@@ -35,38 +35,42 @@ class FirestoreService {
   }
 
   // Fetch notes as a stream (real-time)
-  Stream<List<NoteModel>> getNotesStream(String uid) {
-    return _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('notes')
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            // Create a note with the Firestore document ID
-            Map<String, dynamic> data = doc.data();
-            data['id'] = doc.id; // Add the document ID to the data
-            return NoteModel.fromJson(data);
-          }).toList();
-        });
-  }
-  
+Stream<List<NoteModel>> getNotesStream({required String uid}) {
+  return _firestore
+      .collection('users')
+      .doc(uid)
+      .collection('notes')
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          // Create a note with the Firestore document ID
+          Map<String, dynamic> data = doc.data();
+          data['id'] = doc.id; // Add the document ID to the data
+          return NoteModel.fromJson(data);
+        }).toList();
+      });
+}
+
   // Update a note
   Future<void> updateNote(String userId, NoteModel note) async {
-    try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('notes')
-          .doc(note.id)
-          .update(note.toJson());
-      
-      log("Note updated successfully");
-    } catch (e) {
-      log("Error updating note: $e");
-      rethrow;
-    }
+  try {
+    log("Updating note with ID: ${note.id}");
+    await _firestore
+      .collection('users')
+      .doc(userId)
+      .collection('notes')
+      .doc(note.id)
+      .update({
+        'title': note.title,
+        'content': note.content,
+        'createdAt': note.createdAt,
+        'category': note.category,
+      });
+  } catch (e) {
+    log('Error updating note: $e');
+    throw e;
   }
+}
   
   // Delete a note
   Future<void> deleteNote(String userId, String noteId) async {
@@ -131,4 +135,27 @@ class FirestoreService {
       return [];
     }
   }
+
+Future<List<NoteModel>> fetchSortedNotes(String userId, {bool ascending = true}) async {
+  try {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notes')
+        .orderBy('createdAt', descending: !ascending)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      Map<String, dynamic> data = doc.data();
+      data['id'] = doc.id;
+      return NoteModel.fromJson(data);
+    }).toList();
+  } catch (e) {
+    log("Error fetching sorted notes: $e");
+    rethrow;
+  }
+}
+
+
+
 }
